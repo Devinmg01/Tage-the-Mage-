@@ -3,12 +3,24 @@ package myGame;
 import tage.*;
 import tage.shapes.*;
 
+
 import java.lang.Math;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
 import javax.swing.*;
 import org.joml.*;
+
+
+import net.java.games.input.*;
+import net.java.games.input.Component.Identifier.*;
+
+
+
+import java.util.HashSet;
+
+
+
 
 public class MyGame extends VariableFrameRateGame
 {
@@ -22,6 +34,8 @@ public class MyGame extends VariableFrameRateGame
 	private ObjShape dolS;
 	private TextureImage doltx;
 	private Light light1;
+
+	private HashSet<Integer> activeKeys = new HashSet<>();
 
 	public MyGame() { super(); }
 
@@ -91,27 +105,46 @@ public class MyGame extends VariableFrameRateGame
 		Vector3f hud2Color = new Vector3f(0,0,1);
 		(engine.getHUDmanager()).setHUD1(dispStr1, hud1Color, 15, 15);
 		(engine.getHUDmanager()).setHUD2(dispStr2, hud2Color, 500, 15);
+
+		Vector3f loc = dol.getWorldLocation();
+		Vector3f fwd = dol.getWorldForwardVector();
+		float moveSpeed = 0.055f;
+
+
+		if (activeKeys.contains(KeyEvent.VK_W)) {
+        	loc = loc.add(fwd.mul(moveSpeed));
+    	}
+    	if (activeKeys.contains(KeyEvent.VK_S)) {
+        	loc = loc.add(fwd.mul(-moveSpeed));
+    	}
+		dol.setLocalLocation(loc);
 	}
 
+	
+
 	@Override
-	public void keyPressed(KeyEvent e)
-	{	switch (e.getKeyCode())
-		{	case KeyEvent.VK_C:
-				counter++;
-				break;
-			case KeyEvent.VK_1:
-				paused = !paused;
-				break;
-			case KeyEvent.VK_2:
-				dol.getRenderStates().setWireframe(true);
-				break;
-			case KeyEvent.VK_3:
-				dol.getRenderStates().setWireframe(false);
-				break;
-			case KeyEvent.VK_4:
-				(engine.getRenderSystem().getViewport("MAIN").getCamera()).setLocation(new Vector3f(0,0,0));
-				break;
-		}
-		super.keyPressed(e);
+    public void keyPressed(KeyEvent e) {
+        activeKeys.add(e.getKeyCode());
+
+        if (e.getKeyCode() == KeyEvent.VK_1) {
+            paused = !paused;
+        }  else if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            System.exit(0);
+        }  
+        
+
+    }
+    
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        activeKeys.remove(e.getKeyCode());
+    }
+
+	public void moveCameraForwardBackward(float moveSpeed) {
+		Camera cam = engine.getRenderSystem().getViewport("MAIN").getCamera();
+		Vector3f loc = cam.getLocation();
+		Vector3f fwd = cam.getN();
+		cam.setLocation(loc.add(fwd.mul(moveSpeed)));
 	}
 }
