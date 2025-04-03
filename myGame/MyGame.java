@@ -43,13 +43,13 @@ public class MyGame extends VariableFrameRateGame
 	@Override
 	public void loadShapes()
 	{
-		dolS = new ImportedModel("dolphinHighPoly.obj");
+		dolS = new ImportedModel("wizard.obj");
 	}
 
 	@Override
 	public void loadTextures()
 	{
-		doltx = new TextureImage("Dolphin_HighPolyUV.png");
+		doltx = new TextureImage("WizardUV.png");
 	}
 
 	@Override
@@ -58,7 +58,7 @@ public class MyGame extends VariableFrameRateGame
 		// dolphin (temp)
 		dol = new GameObject(GameObject.root(), dolS, doltx);
 		Matrix4f initialTranslation = new Matrix4f().translation(0, 0, 0);
-		Matrix4f initialScale = new Matrix4f().scaling(3.0f);
+		Matrix4f initialScale = new Matrix4f().scaling(1.0f);
 
 		dol.setLocalTranslation(initialTranslation);
 		dol.setLocalScale(initialScale);
@@ -166,7 +166,7 @@ public class MyGame extends VariableFrameRateGame
 		int fluffyClouds = engine.getSceneGraph().loadCubeMap("fluffyClouds");
 		int lakeIslands = engine.getSceneGraph().loadCubeMap("lakeIslands");
 
-		engine.getSceneGraph().setActiveSkyBoxTexture(fluffyClouds);
+		engine.getSceneGraph().setActiveSkyBoxTexture(lakeIslands);
 		engine.getSceneGraph().setSkyBoxEnabled(true);
 	}
 }
