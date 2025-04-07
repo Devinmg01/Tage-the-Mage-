@@ -39,5 +39,4 @@ public abstract class AbstractInputAction implements IAction {
 	 * @param evt -- the event associated with invoking this action
 	 */
 	public abstract void performAction(float time, Event evt);
-
 }

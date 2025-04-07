@@ -1,39 +1,33 @@
 package myGame;
 
+import myGame.actions.*;
+import myGame.entities.*;
 import tage.*;
 
+import tage.input.InputManager;
 import tage.shapes.*;
-
-import java.lang.Math;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.HashSet;
-import javax.swing.*;
 
 import org.joml.*;
 
 import net.java.games.input.*;
 import net.java.games.input.Component.Identifier.*;
 
-public class MyGame extends VariableFrameRateGame
-{
+public class MyGame extends VariableFrameRateGame {
 	private static Engine engine;
+	private InputManager im;
+	private CameraOrbit3D cam;
+	private Avatar avatar;
+	private GameObject terrain;
+	private ObjShape terrainShape, avatarShape;
+	private TextureImage terrainTex, avatarTex;
+	private Vector3f hud1Color;
+	private double lastFrameTime, currFrameTime, elapseFrameTime;
 
-	private boolean paused = false;
-	private int counter = 0;
-	private double lastFrameTime, currFrameTime, elapsTime;
+	public MyGame() {
+		super();
+	}
 
-	private GameObject dol;
-	private ObjShape dolS;
-	private TextureImage doltx;
-	private Light light1;
-
-	private HashSet<Integer> activeKeys = new HashSet<>();
-
-	public MyGame() { super(); }
-
-	public static void main(String[] args)
-	{
+	public static void main(String[] args) {
 		MyGame game = new MyGame();
 		engine = new Engine(game);
 		game.initializeSystem();
@@ -41,132 +35,182 @@ public class MyGame extends VariableFrameRateGame
 	}
 
 	@Override
-	public void loadShapes()
-	{
-		dolS = new ImportedModel("dolphinHighPoly.obj");
+	public void loadShapes() {
+		terrainShape = new TerrainPlane();
+		avatarShape = new ImportedModel("dolphinHighPoly.obj");
 	}
 
 	@Override
-	public void loadTextures()
-	{
-		doltx = new TextureImage("Dolphin_HighPolyUV.png");
+	public void loadTextures() {
+		terrainTex = new TextureImage("Grass006_1K-PNG_Color.png");
+		avatarTex = new TextureImage("Dolphin_HighPolyUV.png");
 	}
 
 	@Override
-	public void buildObjects()
-	{
-		// dolphin (temp)
-		dol = new GameObject(GameObject.root(), dolS, doltx);
-		Matrix4f initialTranslation = new Matrix4f().translation(0, 0, 0);
-		Matrix4f initialScale = new Matrix4f().scaling(3.0f);
-
-		dol.setLocalTranslation(initialTranslation);
-		dol.setLocalScale(initialScale);
-
-		// ground plane
-
-		ObjShape terrainShape = new TerrainPlane(); // grayscale heightmap image
-		TextureImage terrainTex = new TextureImage("Grass006_1K-PNG_Color.png");
-
-		GameObject terrain = new GameObject(GameObject.root(), terrainShape, terrainTex);
-
-		// Scale and position it
-		terrain.setLocalScale(new Matrix4f().scaling(300f, 20f, 300f)); // x and z cover more area whiule y leads to taller and deeper valleys
+	public void buildObjects() {
+		// Terrain
+		terrain = new GameObject(GameObject.root(), terrainShape, terrainTex);
+		terrain.setLocalScale(new Matrix4f().scaling(300f, 20f, 300f)); // x and z cover more area while y leads to
+																		// taller and deeper valleys
 		terrain.setLocalTranslation(new Matrix4f().translation(0f, -5f, 0f));
-
-		// Mark as terrain for height queries
-		terrain.setIsTerrain(true);
+		terrain.getRenderStates().setTiling(1);
+		terrain.getRenderStates().setTileFactor(50);
+		terrain.setIsTerrain(true); // mark as terrain for height queries
 		terrain.setHeightMap(new TextureImage("HeightmapTest.png"));
-		
+
+		// Avatar
+		avatar = new Avatar(GameObject.root(), avatarShape, avatarTex);
+		avatar.setLocalTranslation(new Matrix4f().translation(0, 1, 0));
+		avatar.setLocalScale(new Matrix4f().scaling(3.0f));
+
+		hud1Color = new Vector3f(1, 0, 0);
 	}
 
 	@Override
-	public void initializeLights()
-	{
+	public void initializeLights() {
 		Light.setGlobalAmbient(0.5f, 0.5f, 0.5f);
-		light1 = new Light();
-		light1.setLocation(new Vector3f(5.0f, 4.0f, 2.0f));
-		engine.getSceneGraph().addLight(light1);
+		Light ambientLight = new Light();
+		ambientLight.setDiffuse(0.0f, 0.0f, 0.0f);
+		ambientLight.setSpecular(0.0f, 0.0f, 0.0f);
+		ambientLight.setLocation(new Vector3f(5.0f, 4.0f, 2.0f));
+
+		engine.getSceneGraph().addLight(ambientLight);
 	}
 
 	@Override
-	public void initializeGame()
-	{
-		lastFrameTime = System.currentTimeMillis();
-		currFrameTime = System.currentTimeMillis();
-		elapsTime = 0.0;
-		engine.getRenderSystem().setWindowDimensions(1900, 1000);
-
-		Camera cam = engine.getRenderSystem().getViewport("MAIN").getCamera();
-		cam.setLocation(new Vector3f(0, 0, 5));
-	}
-
-	@Override
-	public void update()
-	{
-		lastFrameTime = currFrameTime;
-		currFrameTime = System.currentTimeMillis();
-		if (!paused) elapsTime += (currFrameTime - lastFrameTime) / 1000.0;
-
-		//dol.setLocalRotation(new Matrix4f().rotate((float)elapsTime, 0, 1, 0));
-
-		int elapsTimeSec = Math.round((float) elapsTime);
-		String dispStr1 = "Time = " + elapsTimeSec;
-		String dispStr2 = "Keyboard hits = " + counter;
-
-		Vector3f hud1Color = new Vector3f(1f, 0f, 0f);
-		Vector3f hud2Color = new Vector3f(0f, 0f, 1f);
-
-		engine.getHUDmanager().setHUD1(dispStr1, hud1Color, 15, 15);
-		engine.getHUDmanager().setHUD2(dispStr2, hud2Color, 500, 15);
-
-		// Dolphin movement
-		Vector3f loc = dol.getWorldLocation();
-		Vector3f fwd = dol.getWorldForwardVector();
-		Camera cam = (engine.getRenderSystem().getViewport("MAIN").getCamera());
-		Vector3f camLoc = cam.getLocation();
-		float moveSpeed = 0.055f;
-
-		if (activeKeys.contains(KeyEvent.VK_W)) {
-			loc = loc.add(fwd.mul(moveSpeed));
-		}
-		if (activeKeys.contains(KeyEvent.VK_S)) {
-			loc = loc.add(fwd.mul(-moveSpeed));
-		}
-
-		dol.setLocalLocation(loc);
-		cam.setU(dol.getWorldRightVector());
-        cam.setV(dol.getWorldUpVector());
-        cam.setN(dol.getWorldForwardVector());
-        cam.setLocation(loc.add(dol.getWorldUpVector().mul(1.3f)).add(dol.getWorldForwardVector().mul(-3.5f)));
-
-		
-	}
-
-	@Override
-	public void keyPressed(KeyEvent e)
-	{
-		activeKeys.add(e.getKeyCode());
-
-		if (e.getKeyCode() == KeyEvent.VK_1)
-			paused = !paused;
-		else if (e.getKeyCode() == KeyEvent.VK_ESCAPE)
-			System.exit(0);
-	}
-
-	@Override
-	public void keyReleased(KeyEvent e)
-	{
-		activeKeys.remove(e.getKeyCode());
-	}
-
-	@Override
-	public void loadSkyBoxes()
-	{
+	public void loadSkyBoxes() {
 		int fluffyClouds = engine.getSceneGraph().loadCubeMap("fluffyClouds");
 		int lakeIslands = engine.getSceneGraph().loadCubeMap("lakeIslands");
 
 		engine.getSceneGraph().setActiveSkyBoxTexture(fluffyClouds);
 		engine.getSceneGraph().setSkyBoxEnabled(true);
+	}
+
+	@Override
+	public void initializeGame() {
+		(engine.getRenderSystem()).setWindowDimensions(1900, 1000);
+		cam = new CameraOrbit3D((engine.getRenderSystem()).getViewport("MAIN").getCamera(), avatar);
+
+		// Initialize game states
+		lastFrameTime = System.currentTimeMillis();
+		currFrameTime = System.currentTimeMillis();
+		elapseFrameTime = 0.0;
+
+		// Map key bindings
+		mapKeyBindings();
+	}
+
+	@Override
+	public void update() {
+		// Calculate time since last update call and update game actions
+		lastFrameTime = currFrameTime;
+		currFrameTime = System.currentTimeMillis();
+		elapseFrameTime = (currFrameTime - lastFrameTime) / 100.0;
+		im.update((float) (elapseFrameTime));
+
+		// Update game states
+		updateStates();
+
+		// Update HUD
+		updateHUD();
+	}
+
+	/*
+	 * =========================== HELPER FUNCTIONS ===========================
+	 */
+
+	/**
+	 * Maps key bindings to actions
+	 */
+	private void mapKeyBindings() {
+		im = engine.getInputManager();
+
+		// Actions
+		FwdAction moveForward = new FwdAction(avatar, false);
+		FwdAction moveBack = new FwdAction(avatar, true);
+		TurnAction turnLeft = new TurnAction(avatar, false);
+		TurnAction turnRight = new TurnAction(avatar, true);
+		ZoomOrbitAction zoomInOrbit = new ZoomOrbitAction(cam, true);
+		ZoomOrbitAction zoomOutOrbit = new ZoomOrbitAction(cam, false);
+		ElevateOrbitAction elevateOrbit = new ElevateOrbitAction(cam, false);
+		ElevateOrbitAction lowerOrbit = new ElevateOrbitAction(cam, true);
+		RotateOrbitAction rotateRightOrbit = new RotateOrbitAction(cam, true);
+		RotateOrbitAction rotateLeftOrbit = new RotateOrbitAction(cam, false);
+		ExitGameAction exitGame = new ExitGameAction();
+
+		// Keyboard bindings
+		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.W, moveForward,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.S, moveBack,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.A, turnLeft,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.D, turnRight,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.E, zoomInOrbit,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.Q, zoomOutOrbit,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.UP, elevateOrbit,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.DOWN, lowerOrbit,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.LEFT, rotateLeftOrbit,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.RIGHT, rotateRightOrbit,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
+		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.ESCAPE, exitGame,
+				InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
+
+		// Gamepad bindings
+		im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Axis.Y, moveBack,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN); // left stick y-axis
+		im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Axis.X, turnRight,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN); // left stick x-axis
+		im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Axis.RX, rotateRightOrbit,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN); // right stick x-axis
+		im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Axis.Z, zoomOutOrbit,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN); // L2 out R2 in
+		im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Button._4, lowerOrbit,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN); // L1
+		im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Button._5, elevateOrbit,
+				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN); // R1
+		im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Button._7, exitGame,
+				InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY); // start button (right settings)
+
+		// im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Button._0,
+		// , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN); // a button
+		// im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Button._1,
+		// , InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY); // b button
+		// im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Button._2,
+		// , InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY); // x button
+		// im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Button._3,
+		// , InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN); // y button
+		// im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Button._6,
+		// , InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY); // back button (left
+		// settings)
+
+	}
+
+	/**
+	 * Updates the game states and parameters
+	 */
+	private void updateStates() {
+		// Update the camera to follow the avatar
+		cam.update();
+
+		/* will add more states here later */
+	}
+
+	/**
+	 * Updates the HUDs
+	 */
+	private void updateHUD() {
+		Viewport main = (engine.getRenderSystem()).getViewport("MAIN");
+
+		String hud1Str = "Score: " + avatar.getScore();
+
+		(engine.getHUDmanager()).setHUD1(hud1Str, hud1Color,
+				(int) ((main.getActualWidth() - (main.getActualWidth() / 2)) - (hud1Str.length() * 8 / 2)), 15);
 	}
 }
