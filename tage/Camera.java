@@ -96,4 +96,36 @@ public class Camera
 
 		return(view);
 	}
+
+	// ------------------ MOVEMENT METHODS ----------------------------
+
+	/**
+	 * Rotates Camera around the V axis by the specified angle in radians
+	 */
+	public void yaw(float angle) {
+		Matrix4f rotMat = new Matrix4f().rotation(angle, v);
+		u.mulDirection(rotMat).normalize();
+		n.mulDirection(rotMat).normalize();
+		n.set(new Vector3f(u).cross(v).negate().normalize());
+	}
+
+	/**
+	 * Rotates Camera around the U axis by the specified angle in radians
+	 */
+	public void pitch(float angle) {
+		Matrix4f rotMat = new Matrix4f().rotation(angle, u);
+		v.mulDirection(rotMat).normalize();
+		n.mulDirection(rotMat).normalize();
+		n.set(new Vector3f(u).cross(v).negate().normalize());
+	}
+
+	/**
+	 * Rotates Camera around the N axis by the specified angle in radians
+	 */
+	public void roll(float angle) {
+		Matrix4f rotMat = new Matrix4f().rotation(angle, n);
+		u.mulDirection(rotMat).normalize();
+		v.mulDirection(rotMat).normalize();
+		v.set(new Vector3f(u).cross(n).normalize());
+	}
 }

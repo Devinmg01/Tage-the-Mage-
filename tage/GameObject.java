@@ -399,4 +399,38 @@ public class GameObject
 			Engine.getEngine().getRenderSystem().addTexture((TextureImage)this);
 		}
 	}
+
+	// ------------------ MOVEMENT METHODS ----------------------------
+
+	/**
+	 * Rotates GameObject around the V axis by the specified angle in radians
+	 */
+	public void yaw(float angle) {
+		Matrix4f yawMat = new Matrix4f().rotation(angle, getLocalUpVector().normalize());
+		setLocalRotation(yawMat.mul(getLocalRotation()));
+	}
+
+	/**
+	 * Rotates GameObject around the global V axis by the specified angle in radians
+	 */
+	public void globalYaw(float angle) {
+		Matrix4f globalYawMat = new Matrix4f().rotateY(angle);
+		setLocalRotation(globalYawMat.mul(getLocalRotation()));
+	}
+
+	/**
+	 * Rotates GameObject around the U axis by the specified angle in radians
+	 */
+	public void pitch(float angle) {
+		Matrix4f pitchMat = new Matrix4f().rotation(angle, getLocalRightVector().normalize());
+		setLocalRotation(pitchMat.mul(getLocalRotation()));
+	}
+
+	/**
+	 * Rotates GameObject around the N axis by the specified angle in radians
+	 */
+	public void roll(float angle) {
+		Matrix4f rollMat = new Matrix4f().rotation(angle, getLocalForwardVector().normalize());
+		setLocalRotation(rollMat.mul(getLocalRotation()));
+	}
 }
