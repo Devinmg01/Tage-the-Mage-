@@ -18,8 +18,8 @@ public class MyGame extends VariableFrameRateGame {
 	private CameraOrbit3D cam;
 	private Avatar avatar;
 	private GameObject terrain;
-	private ObjShape terrainShape, avatarShape;
-	private TextureImage terrainTex, avatarTex;
+	private ObjShape terrainShape, avatarShape, wizardTowerShape;
+	private TextureImage terrainTex, avatarTex, wizardTowerTex;
 	private Vector3f hud1Color;
 	private double lastFrameTime, currFrameTime, elapseFrameTime;
 
@@ -37,13 +37,15 @@ public class MyGame extends VariableFrameRateGame {
 	@Override
 	public void loadShapes() {
 		terrainShape = new TerrainPlane();
-		avatarShape = new ImportedModel("dolphinHighPoly.obj");
+		avatarShape = new ImportedModel("wizard.obj");
+		wizardTowerShape = new ImportedModel("wizardTower.obj");
 	}
 
 	@Override
 	public void loadTextures() {
 		terrainTex = new TextureImage("Grass006_1K-PNG_Color.png");
-		avatarTex = new TextureImage("Dolphin_HighPolyUV.png");
+		avatarTex = new TextureImage("WizardUV.png");
+		wizardTowerTex = new TextureImage("wizardTowerUV.png");
 	}
 
 	@Override
@@ -55,15 +57,23 @@ public class MyGame extends VariableFrameRateGame {
 		terrain.setLocalTranslation(new Matrix4f().translation(0f, -5f, 0f));
 		terrain.getRenderStates().setTiling(1);
 		terrain.getRenderStates().setTileFactor(50);
-		terrain.setIsTerrain(true); // mark as terrain for height queries
+		terrain.setIsTerrain(true); //terrain for height queries
 		terrain.setHeightMap(new TextureImage("HeightmapTest.png"));
 
 		// Avatar
 		avatar = new Avatar(GameObject.root(), avatarShape, avatarTex);
-		avatar.setLocalTranslation(new Matrix4f().translation(0, 1, 0));
-		avatar.setLocalScale(new Matrix4f().scaling(3.0f));
+		avatar.setLocalTranslation(new Matrix4f().translation(0, -1, 0));
+		avatar.setLocalScale(new Matrix4f().scaling(1.0f));
 
 		hud1Color = new Vector3f(1, 0, 0);
+
+		//tower
+		GameObject wizardTower = new GameObject(GameObject.root(), wizardTowerShape, wizardTowerTex);
+		wizardTower.getRenderStates().hasLighting(true); 
+		
+		wizardTower.setLocalScale(new Matrix4f().scaling(5f)); 
+		wizardTower.setLocalTranslation(new Matrix4f().translation(20f, 1f, 10f)); 
+
 	}
 
 	@Override
@@ -81,8 +91,9 @@ public class MyGame extends VariableFrameRateGame {
 	public void loadSkyBoxes() {
 		int fluffyClouds = engine.getSceneGraph().loadCubeMap("fluffyClouds");
 		int lakeIslands = engine.getSceneGraph().loadCubeMap("lakeIslands");
+		int classicLand = engine.getSceneGraph().loadCubeMap("classicLand");
 
-		engine.getSceneGraph().setActiveSkyBoxTexture(fluffyClouds);
+		engine.getSceneGraph().setActiveSkyBoxTexture(classicLand);
 		engine.getSceneGraph().setSkyBoxEnabled(true);
 	}
 
