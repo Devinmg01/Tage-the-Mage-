@@ -52,9 +52,9 @@ public class MyGame extends VariableFrameRateGame {
 	public void buildObjects() {
 		// Terrain
 		terrain = new GameObject(GameObject.root(), terrainShape, terrainTex);
-		terrain.setLocalScale(new Matrix4f().scaling(300f, 20f, 300f)); // x and z cover more area while y leads to
+		terrain.setLocalScale(new Matrix4f().scaling(300f, 40f, 300f)); // x and z cover more area while y leads to
 																		// taller and deeper valleys
-		terrain.setLocalTranslation(new Matrix4f().translation(0f, -5f, 0f));
+		terrain.setLocalTranslation(new Matrix4f().translation(0f, 0f, 0f));
 		terrain.getRenderStates().setTiling(1);
 		terrain.getRenderStates().setTileFactor(50);
 		terrain.setIsTerrain(true); //terrain for height queries
@@ -62,7 +62,7 @@ public class MyGame extends VariableFrameRateGame {
 
 		// Avatar
 		avatar = new Avatar(GameObject.root(), avatarShape, avatarTex);
-		avatar.setLocalTranslation(new Matrix4f().translation(0, -1, 0));
+		avatar.setLocalTranslation(new Matrix4f().translation(0, 0, 0));
 		avatar.setLocalScale(new Matrix4f().scaling(1.0f));
 
 		hud1Color = new Vector3f(1, 0, 0);
@@ -72,7 +72,7 @@ public class MyGame extends VariableFrameRateGame {
 		wizardTower.getRenderStates().hasLighting(true); 
 		
 		wizardTower.setLocalScale(new Matrix4f().scaling(5f)); 
-		wizardTower.setLocalTranslation(new Matrix4f().translation(20f, 1f, 10f)); 
+		wizardTower.setLocalTranslation(new Matrix4f().translation(-13f, 27f, -142f)); 
 
 	}
 
@@ -210,7 +210,16 @@ public class MyGame extends VariableFrameRateGame {
 		// Update the camera to follow the avatar
 		cam.update();
 
+		// Terrain following
+		Vector3f loc = avatar.getWorldLocation();
+		float terrainY = terrain.getHeight(loc.x, loc.z);
+		loc.y = terrainY + 0.2f; //lift avatar up abit
+		avatar.setLocalLocation(loc);
+
 		/* will add more states here later */
+		System.out.printf("Avatar Position: (%.2f, %.2f, %.2f)%n", loc.x, loc.y, loc.z);
+
+
 	}
 
 	/**
