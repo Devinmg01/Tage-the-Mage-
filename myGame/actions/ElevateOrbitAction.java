@@ -4,12 +4,12 @@ import tage.CameraOrbit3D;
 import tage.input.action.AbstractInputAction;
 import net.java.games.input.Event;
 
-public class ElevateOrbitAction extends AbstractInputAction { 
+public class ElevateOrbitAction extends AbstractInputAction {
     private CameraOrbit3D camera;
     private boolean reverse;
     private float amount;
 
-    public ElevateOrbitAction(CameraOrbit3D camera, boolean reverse) { 
+    public ElevateOrbitAction(CameraOrbit3D camera, boolean reverse) {
         this.camera = camera;
         this.reverse = reverse;
     }
@@ -21,8 +21,7 @@ public class ElevateOrbitAction extends AbstractInputAction {
         } else {
             amount = e.getValue();
         }
-        
-        camera.adjustElevation(amount * elapsTime);
-	}
-}
 
+        camera.adjustElevation(amount * elapsTime);
+    }
+}

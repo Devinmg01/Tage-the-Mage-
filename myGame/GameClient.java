@@ -2,33 +2,50 @@ package myGame;
 
 import myGame.actions.*;
 import myGame.entities.*;
+import myGame.network.ClientManager;
+import myGame.network.GhostManager;
 import tage.*;
-
 import tage.input.InputManager;
 import tage.shapes.*;
-
 import org.joml.*;
-
 import net.java.games.input.*;
 import net.java.games.input.Component.Identifier.*;
 
-public class MyGame extends VariableFrameRateGame {
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+public class GameClient extends VariableFrameRateGame {
+
+	// Class Variables
 	private static Engine engine;
 	private InputManager im;
+	private ClientManager clientManager;
+	private GhostManager ghostManager;
+
 	private CameraOrbit3D cam;
 	private Avatar avatar;
 	private GameObject terrain;
 	private ObjShape terrainShape, avatarShape, wizardTowerShape;
-	private TextureImage terrainTex, avatarTex, wizardTowerTex;
+	private TextureImage terrainTex, wizardTowerTex;
+	private TextureImage[] avatarTextures = new TextureImage[3];
 	private Vector3f hud1Color;
-	private double lastFrameTime, currFrameTime, elapseFrameTime;
 
-	public MyGame() {
+	private double lastFrameTime, currFrameTime, elapseFrameTime;
+	private boolean isClientConnected = false;
+	private final String serverAddress;
+	private final int serverPort;
+
+	public GameClient(String serverAddress, int serverPort) {
 		super();
+		this.serverAddress = serverAddress;
+		this.serverPort = serverPort;
 	}
 
 	public static void main(String[] args) {
-		MyGame game = new MyGame();
+		GameClient game = new GameClient(args[0], Integer.parseInt(args[1]));
 		engine = new Engine(game);
 		game.initializeSystem();
 		game.game_loop();
@@ -44,7 +61,7 @@ public class MyGame extends VariableFrameRateGame {
 	@Override
 	public void loadTextures() {
 		terrainTex = new TextureImage("Grass006_1K-PNG_Color.png");
-		avatarTex = new TextureImage("WizardUV.png");
+		avatarTextures[0] = new TextureImage("WizardUV.png");
 		wizardTowerTex = new TextureImage("wizardTowerUV.png");
 	}
 
@@ -57,23 +74,22 @@ public class MyGame extends VariableFrameRateGame {
 		terrain.setLocalTranslation(new Matrix4f().translation(0f, 0f, 0f));
 		terrain.getRenderStates().setTiling(1);
 		terrain.getRenderStates().setTileFactor(50);
-		terrain.setIsTerrain(true); //terrain for height queries
+		terrain.setIsTerrain(true); // terrain for height queries
 		terrain.setHeightMap(new TextureImage("HeightmapTest.png"));
 
 		// Avatar
-		avatar = new Avatar(GameObject.root(), avatarShape, avatarTex);
-		avatar.setLocalTranslation(new Matrix4f().translation(0, 0, 0));
+		avatar = new Avatar(GameObject.root(), avatarShape, avatarTextures[0]);
+		avatar.setLocalTranslation(new Matrix4f().translation(0, 9.5f, 0)); // position the avatar above the terrain
 		avatar.setLocalScale(new Matrix4f().scaling(1.0f));
 
-		hud1Color = new Vector3f(1, 0, 0);
-
-		//tower
+		// Tower
 		GameObject wizardTower = new GameObject(GameObject.root(), wizardTowerShape, wizardTowerTex);
-		wizardTower.getRenderStates().hasLighting(true); 
-		
-		wizardTower.setLocalScale(new Matrix4f().scaling(5f)); 
-		wizardTower.setLocalTranslation(new Matrix4f().translation(-13f, 27f, -142f)); 
+		wizardTower.getRenderStates().hasLighting(true);
+		wizardTower.setLocalScale(new Matrix4f().scaling(5f));
+		wizardTower.setLocalTranslation(new Matrix4f().translation(-13f, 27f, -142f));
 
+		// Hud Color
+		hud1Color = new Vector3f(1, 0, 0);
 	}
 
 	@Override
@@ -102,13 +118,16 @@ public class MyGame extends VariableFrameRateGame {
 		(engine.getRenderSystem()).setWindowDimensions(1900, 1000);
 		cam = new CameraOrbit3D((engine.getRenderSystem()).getViewport("MAIN").getCamera(), avatar);
 
+		// Initialize Network Client Manager
+		setupNetworking();
+
+		// Map key bindings
+		mapKeyBindings();
+
 		// Initialize game states
 		lastFrameTime = System.currentTimeMillis();
 		currFrameTime = System.currentTimeMillis();
 		elapseFrameTime = 0.0;
-
-		// Map key bindings
-		mapKeyBindings();
 	}
 
 	@Override
@@ -117,13 +136,18 @@ public class MyGame extends VariableFrameRateGame {
 		lastFrameTime = currFrameTime;
 		currFrameTime = System.currentTimeMillis();
 		elapseFrameTime = (currFrameTime - lastFrameTime) / 100.0;
+
 		im.update((float) (elapseFrameTime));
 
 		// Update game states
 		updateStates();
 
-		// Update HUD
+		// Process networking
+		processNetworking();
+
+		// Update HUDs
 		updateHUD();
+
 	}
 
 	/*
@@ -137,16 +161,16 @@ public class MyGame extends VariableFrameRateGame {
 		im = engine.getInputManager();
 
 		// Actions
-		FwdAction moveForward = new FwdAction(avatar, false);
-		FwdAction moveBack = new FwdAction(avatar, true);
-		TurnAction turnLeft = new TurnAction(avatar, false);
-		TurnAction turnRight = new TurnAction(avatar, true);
-		ZoomOrbitAction zoomInOrbit = new ZoomOrbitAction(cam, true);
-		ZoomOrbitAction zoomOutOrbit = new ZoomOrbitAction(cam, false);
+		FwdAction moveForward = new FwdAction(avatar, clientManager, false);
+		FwdAction moveBack = new FwdAction(avatar, clientManager, true);
+		TurnAction turnLeft = new TurnAction(avatar, true);
+		TurnAction turnRight = new TurnAction(avatar, false);
+		ZoomOrbitAction zoomInOrbit = new ZoomOrbitAction(cam, false);
+		ZoomOrbitAction zoomOutOrbit = new ZoomOrbitAction(cam, true);
 		ElevateOrbitAction elevateOrbit = new ElevateOrbitAction(cam, false);
 		ElevateOrbitAction lowerOrbit = new ElevateOrbitAction(cam, true);
-		RotateOrbitAction rotateRightOrbit = new RotateOrbitAction(cam, true);
-		RotateOrbitAction rotateLeftOrbit = new RotateOrbitAction(cam, false);
+		RotateOrbitAction rotateRightOrbit = new RotateOrbitAction(cam, false);
+		RotateOrbitAction rotateLeftOrbit = new RotateOrbitAction(cam, true);
 		ExitGameAction exitGame = new ExitGameAction();
 
 		// Keyboard bindings
@@ -204,22 +228,45 @@ public class MyGame extends VariableFrameRateGame {
 	}
 
 	/**
+	 * Initializes the network client manager
+	 */
+	private void setupNetworking() {
+		isClientConnected = false;
+		try {
+			ghostManager = new GhostManager(this);
+			clientManager = new ClientManager(InetAddress.getByName(serverAddress), serverPort, this);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		if (clientManager == null) {
+			System.out.println("Missing server host");
+		} else {
+			System.out.println("Sending join message to server host");
+			clientManager.sendJoinMessage();
+			clientManager.sendCreateMessage(0, avatar.getWorldLocation());
+		}
+	}
+
+	/**
+	 * Processes packets received by the client from the server
+	 */
+	protected void processNetworking() {
+		if (clientManager != null) {
+			clientManager.processPackets();
+		}
+	}
+
+	/**
 	 * Updates the game states and parameters
 	 */
 	private void updateStates() {
 		// Update the camera to follow the avatar
 		cam.update();
 
-		// Terrain following
-		Vector3f loc = avatar.getWorldLocation();
-		float terrainY = terrain.getHeight(loc.x, loc.z);
-		loc.y = terrainY + 0.2f; //lift avatar up abit
-		avatar.setLocalLocation(loc);
-
-		/* will add more states here later */
-		System.out.printf("Avatar Position: (%.2f, %.2f, %.2f)%n", loc.x, loc.y, loc.z);
-
-
+		// Update avatar's position to always be on the terrain
+		updateAvatarTerrain();
 	}
 
 	/**
@@ -233,4 +280,68 @@ public class MyGame extends VariableFrameRateGame {
 		(engine.getHUDmanager()).setHUD1(hud1Str, hud1Color,
 				(int) ((main.getActualWidth() - (main.getActualWidth() / 2)) - (hud1Str.length() * 8 / 2)), 15);
 	}
+
+	/**
+	 * Updates the avatar's position to always be on the terrain
+	 */
+	private void updateAvatarTerrain() {
+		Vector3f loc = avatar.getWorldLocation();
+		float terrainY = terrain.getHeight(loc.x, loc.z);
+		float currentY = loc.y;
+		float targetY = terrainY + 0.1f;
+		float newY = currentY + (targetY - currentY) * 0.1f;
+		loc.y = newY;
+		avatar.setLocalLocation(loc);
+	}
+
+	/*
+	 * =========================== Getters and Setters ===========================
+	 */
+
+	/**
+	 * @return the engine
+	 */
+	public Engine getEngine() {
+		return engine;
+	}
+
+	/**
+	 * @return the ghost manager
+	 */
+	public GhostManager getGhostManager() {
+		return ghostManager;
+	}
+
+	/**
+	 * @return the avatar
+	 */
+	public Avatar getAvatar() {
+		return avatar;
+	}
+
+	/**
+	 * @return the avatar shape
+	 */
+	public ObjShape getAvatarShape() {
+		return avatarShape;
+	}
+
+	/**
+	 * @return the specified avatar texture
+	 */
+	public TextureImage getAvatarTexture(int skin) {
+		if (skin < 0 || skin >= avatarTextures.length) {
+			System.out.println("Invalid skin index. Returning default texture.");
+			return avatarTextures[0];
+		}
+		return avatarTextures[skin];
+	}
+
+	/**
+	 * Set whether the client is connected to the server
+	 */
+	public void setIsClientConnected(boolean isClientConnected) {
+		this.isClientConnected = isClientConnected;
+	}
+
 }

@@ -15,13 +15,12 @@ public class TurnAction extends AbstractInputAction {
     }
 
     @Override
-    public void performAction(float elapsTime, Event e) { 
+    public void performAction(float elapsTime, Event e) {
         if (reverse) {
             amount = -e.getValue() * 0.1f;
         } else {
             amount = e.getValue() * 0.1f;
         }
-        avatar.globalYaw(amount * elapsTime);
-	}
+        avatar.globalYaw(-amount * elapsTime);
+    }
 }
-

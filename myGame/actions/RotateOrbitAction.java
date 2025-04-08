@@ -21,6 +21,6 @@ public class RotateOrbitAction extends AbstractInputAction {
         } else {
             amount = e.getValue() * 3.5f;
         }
-        camera.orbit(amount * elapsTime);
+        camera.orbit(-amount * elapsTime);
     }
 }
