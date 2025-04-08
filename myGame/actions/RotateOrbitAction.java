@@ -17,9 +17,9 @@ public class RotateOrbitAction extends AbstractInputAction {
     @Override
     public void performAction(float elapsTime, Event e) {
         if (reverse) {
-            amount = -e.getValue() * 1.5f;
+            amount = -e.getValue() * 3.5f;
         } else {
-            amount = e.getValue() * 1.5f;
+            amount = e.getValue() * 3.5f;
         }
         camera.orbit(amount * elapsTime);
     }

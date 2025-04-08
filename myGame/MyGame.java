@@ -18,8 +18,8 @@ public class MyGame extends VariableFrameRateGame {
 	private CameraOrbit3D cam;
 	private Avatar avatar;
 	private GameObject terrain;
-	private ObjShape terrainShape, avatarShape;
-	private TextureImage terrainTex, avatarTex;
+	private ObjShape terrainShape, avatarShape, wizardTowerShape;
+	private TextureImage terrainTex, avatarTex, wizardTowerTex;
 	private Vector3f hud1Color;
 	private double lastFrameTime, currFrameTime, elapseFrameTime;
 
@@ -37,33 +37,43 @@ public class MyGame extends VariableFrameRateGame {
 	@Override
 	public void loadShapes() {
 		terrainShape = new TerrainPlane();
-		avatarShape = new ImportedModel("dolphinHighPoly.obj");
+		avatarShape = new ImportedModel("wizard.obj");
+		wizardTowerShape = new ImportedModel("wizardTower.obj");
 	}
 
 	@Override
 	public void loadTextures() {
 		terrainTex = new TextureImage("Grass006_1K-PNG_Color.png");
-		avatarTex = new TextureImage("Dolphin_HighPolyUV.png");
+		avatarTex = new TextureImage("WizardUV.png");
+		wizardTowerTex = new TextureImage("wizardTowerUV.png");
 	}
 
 	@Override
 	public void buildObjects() {
 		// Terrain
 		terrain = new GameObject(GameObject.root(), terrainShape, terrainTex);
-		terrain.setLocalScale(new Matrix4f().scaling(300f, 20f, 300f)); // x and z cover more area while y leads to
+		terrain.setLocalScale(new Matrix4f().scaling(300f, 40f, 300f)); // x and z cover more area while y leads to
 																		// taller and deeper valleys
-		terrain.setLocalTranslation(new Matrix4f().translation(0f, -5f, 0f));
+		terrain.setLocalTranslation(new Matrix4f().translation(0f, 0f, 0f));
 		terrain.getRenderStates().setTiling(1);
 		terrain.getRenderStates().setTileFactor(50);
-		terrain.setIsTerrain(true); // mark as terrain for height queries
+		terrain.setIsTerrain(true); //terrain for height queries
 		terrain.setHeightMap(new TextureImage("HeightmapTest.png"));
 
 		// Avatar
 		avatar = new Avatar(GameObject.root(), avatarShape, avatarTex);
-		avatar.setLocalTranslation(new Matrix4f().translation(0, 1, 0));
-		avatar.setLocalScale(new Matrix4f().scaling(3.0f));
+		avatar.setLocalTranslation(new Matrix4f().translation(0, 0, 0));
+		avatar.setLocalScale(new Matrix4f().scaling(1.0f));
 
 		hud1Color = new Vector3f(1, 0, 0);
+
+		//tower
+		GameObject wizardTower = new GameObject(GameObject.root(), wizardTowerShape, wizardTowerTex);
+		wizardTower.getRenderStates().hasLighting(true); 
+		
+		wizardTower.setLocalScale(new Matrix4f().scaling(5f)); 
+		wizardTower.setLocalTranslation(new Matrix4f().translation(-13f, 27f, -142f)); 
+
 	}
 
 	@Override
@@ -81,8 +91,9 @@ public class MyGame extends VariableFrameRateGame {
 	public void loadSkyBoxes() {
 		int fluffyClouds = engine.getSceneGraph().loadCubeMap("fluffyClouds");
 		int lakeIslands = engine.getSceneGraph().loadCubeMap("lakeIslands");
+		int classicLand = engine.getSceneGraph().loadCubeMap("classicLand");
 
-		engine.getSceneGraph().setActiveSkyBoxTexture(fluffyClouds);
+		engine.getSceneGraph().setActiveSkyBoxTexture(classicLand);
 		engine.getSceneGraph().setSkyBoxEnabled(true);
 	}
 
@@ -199,7 +210,16 @@ public class MyGame extends VariableFrameRateGame {
 		// Update the camera to follow the avatar
 		cam.update();
 
+		// Terrain following
+		Vector3f loc = avatar.getWorldLocation();
+		float terrainY = terrain.getHeight(loc.x, loc.z);
+		loc.y = terrainY + 0.2f; //lift avatar up abit
+		avatar.setLocalLocation(loc);
+
 		/* will add more states here later */
+		System.out.printf("Avatar Position: (%.2f, %.2f, %.2f)%n", loc.x, loc.y, loc.z);
+
+
 	}
 
 	/**
