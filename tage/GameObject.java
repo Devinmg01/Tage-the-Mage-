@@ -188,6 +188,7 @@ public class GameObject
 	{	parent.removeChild(this);
 		parent = g;
 		parent.addChild(this);
+		update();
 	}
 	
 	protected void setFirstParent(GameObject g)

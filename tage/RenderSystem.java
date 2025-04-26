@@ -288,6 +288,7 @@ public class RenderSystem extends JFrame implements GLEventListener
 			(int)vp.getActualHeight());
 		gl.glClear(GL_COLOR_BUFFER_BIT);
 		gl.glClear(GL_DEPTH_BUFFER_BIT);
+		gl.glDisable(GL_SCISSOR_TEST);
 
 		if (vp.getHasBorder())
 		{	int borderWidth = vp.getBorderWidth();
