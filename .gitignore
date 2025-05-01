@@ -1,2 +1,5 @@
 /.idea
 *.class
+**/*.class
+*.html
+**/*.html

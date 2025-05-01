@@ -1,7 +1,7 @@
 package myGame;
 
 import java.io.IOException;
-import myGame.network.ServerManager;
+import myGame.utility.ServerManager;
 
 public class GameServer {
     public static void main(String[] args) {
