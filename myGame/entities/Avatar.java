@@ -3,6 +3,7 @@ package myGame.entities;
 import tage.GameObject;
 import tage.ObjShape;
 import tage.TextureImage;
+import tage.shapes.AnimatedShape;
 
 public class Avatar extends GameCharacter {
 
@@ -11,10 +12,17 @@ public class Avatar extends GameCharacter {
     private static final float DEFAULT_SPEED = 1.5f;
     private static final int DEFAULT_ATTACK_POWER = 1;
     private static final float DEFAULT_ATTACK_SPEED = 1.0f;
+    private static final long idleDelay = 500; // 0.5 seconds
+
 
     private int attackPower = DEFAULT_ATTACK_POWER;
     private float attackSpeed = DEFAULT_ATTACK_SPEED;
     private int score = 0;
+    private boolean walking = false;
+    private long lastInputTime = System.currentTimeMillis();
+    private String currentAnimation = "";
+    
+
 
     /**
      * Construct GameAvatar object with the specified parameters
@@ -65,4 +73,45 @@ public class Avatar extends GameCharacter {
     public void setScore(int score) {
         this.score = score;
     }
+    public AnimatedShape getAnimatedShape() {
+    return (AnimatedShape) this.getShape();
+    }
+
+    
+
+    public boolean isWalking() {
+        return this.walking;
+    }
+
+    public void setWalking(boolean walking) {
+        this.walking = walking;
+    }
+
+    public void updateLastInputTime() {
+        lastInputTime = System.currentTimeMillis();
+    }
+
+    public long getLastInputTime() {
+        return lastInputTime;
+    }
+
+
+    public boolean shouldPlayIdle() {
+        return (System.currentTimeMillis() - lastInputTime) > idleDelay;
+    }
+
+    
+
+    public String getCurrentAnimation() {
+        return currentAnimation;
+    }
+
+    public void setCurrentAnimation(String animName) {
+        this.currentAnimation = animName;
+    }
+
+
+
+
+
 }
