@@ -1,9 +1,10 @@
 package myGame;
 
-import myGame.actions.*;
-import myGame.entities.*;
-import myGame.network.ClientManager;
-import myGame.network.GhostManager;
+import myGame.action.*;
+import myGame.entity.*;
+import myGame.utility.ClientManager;
+import myGame.utility.EnemyManager;
+import myGame.utility.GhostManager;
 import tage.*;
 import tage.input.InputManager;
 import tage.shapes.*;
@@ -11,8 +12,6 @@ import org.joml.*;
 import net.java.games.input.*;
 import net.java.games.input.Component.Identifier.*;
 
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -24,19 +23,19 @@ public class GameClient extends VariableFrameRateGame {
 	private InputManager im;
 	private ClientManager clientManager;
 	private GhostManager ghostManager;
-
+	private EnemyManager enemyManager;
 	private CameraOrbit3D cam;
 	private Avatar avatar;
-	private GameObject terrain;
+	private GameObject terrain, wizardTower;
 	private ObjShape terrainShape, avatarShape, wizardTowerShape;
 	private TextureImage terrainTex, wizardTowerTex;
 	private TextureImage[] avatarTextures = new TextureImage[3];
 	private Vector3f hud1Color;
 
 	private double lastFrameTime, currFrameTime, elapseFrameTime;
-	private boolean isClientConnected = false;
 	private final String serverAddress;
 	private final int serverPort;
+	private boolean isClientConnected = false;
 
 	public GameClient(String serverAddress, int serverPort) {
 		super();
@@ -60,7 +59,7 @@ public class GameClient extends VariableFrameRateGame {
 
 	@Override
 	public void loadTextures() {
-		terrainTex = new TextureImage("Grass006_1K-PNG_Color.png");
+		terrainTex = new TextureImage("../terrain/grass.png");
 		avatarTextures[0] = new TextureImage("WizardUV.png");
 		wizardTowerTex = new TextureImage("wizardTowerUV.png");
 	}
@@ -72,18 +71,18 @@ public class GameClient extends VariableFrameRateGame {
 		terrain.setLocalScale(new Matrix4f().scaling(300f, 40f, 300f)); // x and z cover more area while y leads to
 																		// taller and deeper valleys
 		terrain.setLocalTranslation(new Matrix4f().translation(0f, 0f, 0f));
-		terrain.getRenderStates().setTiling(1);
+		terrain.getRenderStates().setTiling(2);
 		terrain.getRenderStates().setTileFactor(50);
 		terrain.setIsTerrain(true); // terrain for height queries
-		terrain.setHeightMap(new TextureImage("HeightmapTest.png"));
+		terrain.setHeightMap(new TextureImage("../terrain/HeightmapTest.png"));
 
 		// Avatar
 		avatar = new Avatar(GameObject.root(), avatarShape, avatarTextures[0]);
-		avatar.setLocalTranslation(new Matrix4f().translation(0, 9.5f, 0)); // position the avatar above the terrain
+		avatar.setLocalTranslation(new Matrix4f().translation(-8f, 26f, -140f));
 		avatar.setLocalScale(new Matrix4f().scaling(1.0f));
 
 		// Tower
-		GameObject wizardTower = new GameObject(GameObject.root(), wizardTowerShape, wizardTowerTex);
+		wizardTower = new GameObject(GameObject.root(), wizardTowerShape, wizardTowerTex);
 		wizardTower.getRenderStates().hasLighting(true);
 		wizardTower.setLocalScale(new Matrix4f().scaling(5f));
 		wizardTower.setLocalTranslation(new Matrix4f().translation(-13f, 27f, -142f));
@@ -105,11 +104,9 @@ public class GameClient extends VariableFrameRateGame {
 
 	@Override
 	public void loadSkyBoxes() {
-		int fluffyClouds = engine.getSceneGraph().loadCubeMap("fluffyClouds");
-		int lakeIslands = engine.getSceneGraph().loadCubeMap("lakeIslands");
-		int classicLand = engine.getSceneGraph().loadCubeMap("classicLand");
+		int sky = engine.getSceneGraph().loadCubeMap("clouds");
 
-		engine.getSceneGraph().setActiveSkyBoxTexture(classicLand);
+		engine.getSceneGraph().setActiveSkyBoxTexture(sky);
 		engine.getSceneGraph().setSkyBoxEnabled(true);
 	}
 
@@ -121,13 +118,16 @@ public class GameClient extends VariableFrameRateGame {
 		// Initialize Network Client Manager
 		setupNetworking();
 
+		// Initialize Enemies
+		setupEnemies();
+
 		// Map key bindings
 		mapKeyBindings();
 
 		// Initialize game states
 		lastFrameTime = System.currentTimeMillis();
 		currFrameTime = System.currentTimeMillis();
-		elapseFrameTime = 0.0;
+		elapseFrameTime = 0f;
 	}
 
 	@Override
@@ -135,19 +135,18 @@ public class GameClient extends VariableFrameRateGame {
 		// Calculate time since last update call and update game actions
 		lastFrameTime = currFrameTime;
 		currFrameTime = System.currentTimeMillis();
-		elapseFrameTime = (currFrameTime - lastFrameTime) / 100.0;
+		elapseFrameTime = (currFrameTime - lastFrameTime) / 100f;
 
-		im.update((float) (elapseFrameTime));
+		im.update((float) elapseFrameTime);
 
 		// Update game states
-		updateStates();
+		updateStates((float) elapseFrameTime);
 
 		// Process networking
 		processNetworking();
 
 		// Update HUDs
 		updateHUD();
-
 	}
 
 	/*
@@ -161,8 +160,8 @@ public class GameClient extends VariableFrameRateGame {
 		im = engine.getInputManager();
 
 		// Actions
-		FwdAction moveForward = new FwdAction(avatar, clientManager, false);
-		FwdAction moveBack = new FwdAction(avatar, clientManager, true);
+		FwdAction moveForward = new FwdAction(avatar, clientManager, terrain, false);
+		FwdAction moveBack = new FwdAction(avatar, clientManager, terrain, true);
 		TurnAction turnLeft = new TurnAction(avatar, true);
 		TurnAction turnRight = new TurnAction(avatar, false);
 		ZoomOrbitAction zoomInOrbit = new ZoomOrbitAction(cam, false);
@@ -252,21 +251,29 @@ public class GameClient extends VariableFrameRateGame {
 	/**
 	 * Processes packets received by the client from the server
 	 */
-	protected void processNetworking() {
+	private void processNetworking() {
 		if (clientManager != null) {
 			clientManager.processPackets();
 		}
 	}
 
 	/**
+	 * Initializes the enemy manager and spawns initial enemies
+	 */
+	private void setupEnemies() {
+		enemyManager = new EnemyManager(avatarShape, avatarTextures[0], wizardTower.getWorldLocation(), 1.0f,
+				terrain, clientManager, -100f, 100f, -100f, 100f);
+		for (int i = 0; i < 5; i++) {
+			enemyManager.spawnEnemy();
+		}
+	}
+
+	/**
 	 * Updates the game states and parameters
 	 */
-	private void updateStates() {
-		// Update the camera to follow the avatar
+	private void updateStates(float elapseFrameTime) {
 		cam.update();
-
-		// Update avatar's position to always be on the terrain
-		updateAvatarTerrain();
+		enemyManager.update(elapseFrameTime);
 	}
 
 	/**
@@ -279,19 +286,6 @@ public class GameClient extends VariableFrameRateGame {
 
 		(engine.getHUDmanager()).setHUD1(hud1Str, hud1Color,
 				(int) ((main.getActualWidth() - (main.getActualWidth() / 2)) - (hud1Str.length() * 8 / 2)), 15);
-	}
-
-	/**
-	 * Updates the avatar's position to always be on the terrain
-	 */
-	private void updateAvatarTerrain() {
-		Vector3f loc = avatar.getWorldLocation();
-		float terrainY = terrain.getHeight(loc.x, loc.z);
-		float currentY = loc.y;
-		float targetY = terrainY + 0.1f;
-		float newY = currentY + (targetY - currentY) * 0.1f;
-		loc.y = newY;
-		avatar.setLocalLocation(loc);
 	}
 
 	/*
@@ -310,6 +304,13 @@ public class GameClient extends VariableFrameRateGame {
 	 */
 	public GhostManager getGhostManager() {
 		return ghostManager;
+	}
+
+	/**
+	 * @return the enemy manager
+	 */
+	public EnemyManager getEnemyManager() {
+		return enemyManager;
 	}
 
 	/**
