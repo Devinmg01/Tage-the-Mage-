@@ -7,6 +7,8 @@ import myGame.network.GhostManager;
 import tage.*;
 import tage.input.InputManager;
 import tage.shapes.*;
+import tage.audio.*;
+import tage.Camera;
 import org.joml.*;
 import net.java.games.input.*;
 import net.java.games.input.Component.Identifier.*;
@@ -39,6 +41,8 @@ public class GameClient extends VariableFrameRateGame {
 	private final int serverPort;
 
 	private AnimatedShape wizardShape;
+	private IAudioManager audioMgr;
+	private Sound wizardSound, ambientSound, walkSound;
 
 
 	public GameClient(String serverAddress, int serverPort) {
@@ -80,6 +84,7 @@ public class GameClient extends VariableFrameRateGame {
         goblinTex = new TextureImage("goblin3.png"); 
    
 	}
+	
 
 	@Override
 	public void buildObjects() {
@@ -331,6 +336,11 @@ public class GameClient extends VariableFrameRateGame {
 		loc.y = newY;
 		avatar.setLocalLocation(loc);
 	}
+
+	
+
+
+
 
 	/*
 	 * =========================== Getters and Setters ===========================
