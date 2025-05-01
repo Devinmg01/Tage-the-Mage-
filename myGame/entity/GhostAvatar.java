@@ -1,4 +1,4 @@
-package myGame.entities;
+package myGame.entity;
 
 import tage.GameObject;
 import tage.ObjShape;

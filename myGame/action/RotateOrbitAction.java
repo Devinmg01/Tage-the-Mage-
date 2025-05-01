@@ -1,4 +1,4 @@
-package myGame.actions;
+package myGame.action;
 
 import tage.CameraOrbit3D;
 import tage.input.action.AbstractInputAction;

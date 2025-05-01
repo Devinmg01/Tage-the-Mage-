@@ -1,4 +1,4 @@
-package myGame.entities;
+package myGame.entity;
 
 import org.joml.Vector3f;
 import tage.GameObject;
@@ -31,7 +31,7 @@ public abstract class GameCharacter extends GameObject {
      * Set character health to a specified amount
      */
     public void setHealth(int health) {
-        this.health = health;
+        this.health = Math.max(health, 0);
     }
 
     /**
@@ -44,7 +44,7 @@ public abstract class GameCharacter extends GameObject {
     /**
      * Set character speed to a specified amount
      */
-    public void setSpeed(int speed) {
-        this.speed = speed;
+    public void setSpeed(float speed) {
+        this.speed = Math.max(speed, 0.1f);
     }
 }

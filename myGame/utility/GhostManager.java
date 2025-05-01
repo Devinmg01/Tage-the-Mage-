@@ -1,7 +1,7 @@
-package myGame.network;
+package myGame.utility;
 
 import myGame.GameClient;
-import myGame.entities.GhostAvatar;
+import myGame.entity.GhostAvatar;
 import java.util.HashMap;
 import java.util.UUID;
 import tage.ObjShape;

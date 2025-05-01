@@ -1,4 +1,4 @@
-package myGame.entities;
+package myGame.entity;
 
 import tage.GameObject;
 import tage.ObjShape;
@@ -34,7 +34,7 @@ public class Avatar extends GameCharacter {
      * Set avatar attack power to a specified amount
      */
     public void setAttackPower(int amount) {
-        this.attackPower = amount;
+        this.attackPower = Math.max(attackPower, DEFAULT_ATTACK_POWER);
     }
 
     /**
@@ -48,7 +48,7 @@ public class Avatar extends GameCharacter {
      * Set avatar attack speed to a specified amount
      */
     public void setAttackSpeed(float amount) {
-        this.attackSpeed = amount;
+        this.attackSpeed = Math.max(attackSpeed, DEFAULT_ATTACK_SPEED);
     }
 
     /**
@@ -63,6 +63,6 @@ public class Avatar extends GameCharacter {
      */
 
     public void setScore(int score) {
-        this.score = score;
+        this.score = Math.max(score, 0);
     }
 }

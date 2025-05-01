@@ -1,4 +1,4 @@
-package myGame.actions;
+package myGame.action;
 
 import tage.input.action.AbstractInputAction;
 import net.java.games.input.Event;
