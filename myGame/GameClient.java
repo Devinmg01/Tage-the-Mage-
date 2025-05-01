@@ -77,7 +77,7 @@ public class GameClient extends VariableFrameRateGame {
         terrainTex = new TextureImage("Grass006_1K-PNG_Color.png");
         avatarTextures[0] = new TextureImage("WizardUV.png");
         wizardTowerTex = new TextureImage("wizardTowerUV.png");
-        goblinTex = new TextureImage("goblin3.png"); // <- could be failing here
+        goblinTex = new TextureImage("goblin3.png"); 
    
 	}
 
@@ -95,7 +95,7 @@ public class GameClient extends VariableFrameRateGame {
 
 		// Avatar
 		avatar = new Avatar(GameObject.root(), wizardShape, avatarTextures[0]);
-		avatar.setLocalTranslation(new Matrix4f().translation(0, 9.5f, 0)); // position the avatar above the terrain
+		avatar.setLocalTranslation(new Matrix4f().translation(0, 9.5f, 0)); 
 		avatar.setLocalScale(new Matrix4f().scaling(.2f));
 		
 
