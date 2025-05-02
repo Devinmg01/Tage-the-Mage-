@@ -1,7 +1,7 @@
-package myGame.action;
+package myGame.actions;
 
-import myGame.utility.ClientManager;
-import myGame.entity.Avatar;
+import myGame.network.ClientManager;
+import myGame.entities.Avatar;
 import tage.GameObject;
 import tage.input.action.AbstractInputAction;
 import tage.shapes.AnimatedShape;
