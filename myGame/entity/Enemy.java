@@ -8,6 +8,8 @@ import tage.GameObject;
 import tage.ObjShape;
 import tage.TextureImage;
 import java.util.UUID;
+import tage.audio.*;
+
 
 public class Enemy extends GameCharacter {
 
@@ -17,16 +19,18 @@ public class Enemy extends GameCharacter {
     private UUID id;
     private Vector3f targetLoc;
     private FwdAction fwdAction;
+    
 
     /**
      * Construct Enemy object with the specified parameters
      */
     public Enemy(UUID id, GameObject object, ObjShape shape, TextureImage texture, Vector3f spawnLoc,
-            Vector3f targetLoc, GameObject terrain, ClientManager clientManager) {
+            Vector3f targetLoc, GameObject terrain, ClientManager clientManager, Sound walkSound) {
         super(object, shape, texture, DEFAULT_HEALTH, DEFAULT_SPEED);
         this.id = id;
         this.targetLoc = targetLoc;
-        this.fwdAction = new FwdAction(this, clientManager, terrain, false);
+        this.fwdAction = new FwdAction(this, clientManager, terrain, false, walkSound);
+        
         setLocalLocation(spawnLoc);
         setLocalScale(new Matrix4f().scaling(0.25f));
     }
@@ -35,10 +39,18 @@ public class Enemy extends GameCharacter {
      * Update the enemy's position towards the target
      */
     public void move(float elapsedTime) {
-        if (getLocalLocation().distance(targetLoc) >= 5.5f) {
+        
+        if (getLocalLocation().distance(targetLoc) >= 3.5f) {
             lookAt(targetLoc);
             fwdAction.moveForward(elapsedTime, getSpeed());
         }
+
+        
+ 
+
+        
+
+
     }
 
     /**
