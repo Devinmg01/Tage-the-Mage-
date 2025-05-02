@@ -7,6 +7,8 @@ import tage.input.action.AbstractInputAction;
 import tage.shapes.AnimatedShape;
 import net.java.games.input.Event;
 import org.joml.*;
+import tage.audio.*;
+
 
 public class FwdAction extends AbstractInputAction {
     private GameObject object;
@@ -15,12 +17,14 @@ public class FwdAction extends AbstractInputAction {
     private boolean reverse;
     private float amount;
     private int ticks = 0;
+    private Sound walkSound;
 
-    public FwdAction(GameObject object, ClientManager clientManager, GameObject terrian, boolean reverse) {
+    public FwdAction(GameObject object, ClientManager clientManager, GameObject terrian, boolean reverse, Sound walkSound) {
         this.object = object;
         this.clientManager = clientManager;
         this.terrain = terrian;
         this.reverse = reverse;
+        this.walkSound = walkSound;
     }
 
     public void moveForward(float elapsTime, float amount) {
@@ -57,6 +61,10 @@ public class FwdAction extends AbstractInputAction {
                 avatar.getAnimatedShape().playAnimation("WALKING", 0.33f, AnimatedShape.EndType.LOOP, 0);
                 avatar.setCurrentAnimation("WALKING");
             }
+            if (walkSound != null && !walkSound.getIsPlaying()) {
+		        walkSound.play();
+	        }
+            walkSound.setLocation(avatar.getWorldLocation());
         }
     }
 }

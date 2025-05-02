@@ -10,9 +10,13 @@ import tage.input.InputManager;
 import tage.shapes.*;
 import tage.audio.*;
 import tage.Camera;
+
 import org.joml.*;
 import net.java.games.input.*;
 import net.java.games.input.Component.Identifier.*;
+import static java.lang.Math.toRadians;
+
+
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -41,7 +45,7 @@ public class GameClient extends VariableFrameRateGame {
 
 	private AnimatedShape wizardShape;
 	private IAudioManager audioMgr;
-	private Sound wizardSound, ambientSound, walkSound;
+	private Sound wizardSound, ambientSound, walkSound, goblinSound;
 
 
 	public GameClient(String serverAddress, int serverPort) {
@@ -81,6 +85,30 @@ public class GameClient extends VariableFrameRateGame {
 		wizardTowerTex = new TextureImage("wizardTowerUV.png");
 		goblinTex = new TextureImage("goblin3.png"); 
 	}
+
+	@Override
+	public void loadSounds() {
+    	audioMgr = engine.getAudioManager();
+    	AudioResource walkRes = audioMgr.createAudioResource("grassWalk.wav", AudioResourceType.AUDIO_SAMPLE);
+
+    	walkSound = new Sound(walkRes, SoundType.SOUND_EFFECT, 50, true);
+    	walkSound.initialize(audioMgr);
+
+    	walkSound.setMaxDistance(10.0f); 
+    	walkSound.setMinDistance(5.0f);
+    	walkSound.setRollOff(5.0f);
+
+		AudioResource gruntRes = audioMgr.createAudioResource("goblinLaugh.wav", AudioResourceType.AUDIO_SAMPLE);
+		goblinSound = new Sound(gruntRes, SoundType.SOUND_EFFECT, 100, false);
+		goblinSound.initialize(audioMgr);
+
+		goblinSound.setMaxDistance(10.0f); 
+    	goblinSound.setMinDistance(5.0f);
+    	goblinSound.setRollOff(5.0f);
+		//goblinSound.play();
+
+ 
+	}
 	
 
 	@Override
@@ -98,7 +126,9 @@ public class GameClient extends VariableFrameRateGame {
 		// Avatar
 		avatar = new Avatar(GameObject.root(), wizardShape, avatarTextures[0]);
 		avatar.setLocalTranslation(new Matrix4f().translation(-8f, 26f, -140f));
-		avatar.setLocalScale(new Matrix4f().scaling(1.0f));
+		avatar.setLocalScale(new Matrix4f().scaling(0.2f));
+		avatar.setLocalRotation(new Matrix4f().rotationY((float) java.lang.Math.toRadians(180)));
+
 
 		//goblin
 		GameObject goblin = new GameObject(GameObject.root(), goblinShape, goblinTex);
@@ -166,13 +196,22 @@ public class GameClient extends VariableFrameRateGame {
 
 		wizardShape.updateAnimation();
 
+		setEarParameters();
+
 		if ((System.currentTimeMillis() - avatar.getLastInputTime()) > 500) {
     		if (!"IDLE".equals(avatar.getCurrentAnimation())) {
         		avatar.getAnimatedShape().playAnimation("IDLE", 0.25f, AnimatedShape.EndType.LOOP, 0);
         		avatar.setCurrentAnimation("IDLE");
         		avatar.setWalking(false);
+
+				
+				if (walkSound.getIsPlaying()) {
+				walkSound.stop();
+				}
     		}
 		}
+		
+
 
 		// Update game states
 		updateStates((float) elapseFrameTime);
@@ -195,8 +234,8 @@ public class GameClient extends VariableFrameRateGame {
 		im = engine.getInputManager();
 
 		// Actions
-		FwdAction moveForward = new FwdAction(avatar, clientManager, terrain, false);
-		FwdAction moveBack = new FwdAction(avatar, clientManager, terrain, true);
+		FwdAction moveForward = new FwdAction(avatar, clientManager, terrain, true, walkSound);
+		FwdAction moveBack = new FwdAction(avatar, clientManager, terrain, false, walkSound);
 		TurnAction turnLeft = new TurnAction(avatar, true);
 		TurnAction turnRight = new TurnAction(avatar, false);
 		ZoomOrbitAction zoomInOrbit = new ZoomOrbitAction(cam, false);
@@ -299,8 +338,8 @@ public class GameClient extends VariableFrameRateGame {
 	 * Initializes the enemy manager and spawns initial enemies
 	 */
 	private void setupEnemies() {
-		enemyManager = new EnemyManager(avatarShape, avatarTextures[0], wizardTower.getWorldLocation(), 1.0f,
-				terrain, clientManager, -100f, 100f, -100f, 100f);
+		enemyManager = new EnemyManager(goblinShape, goblinTex, wizardTower.getWorldLocation(), 1.0f,
+				terrain, clientManager, -100f, 100f, -100f, 100f, walkSound, goblinSound,avatar);
 		for (int i = 0; i < 5; i++) {
 			enemyManager.spawnEnemy();
 		}
@@ -382,5 +421,13 @@ public class GameClient extends VariableFrameRateGame {
 	public void setIsClientConnected(boolean isClientConnected) {
 		this.isClientConnected = isClientConnected;
 	}
+
+	public void setEarParameters() {
+    	Camera camera = engine.getRenderSystem().getViewport("MAIN").getCamera();
+    	audioMgr.getEar().setLocation(camera.getLocation());
+		audioMgr.getEar().setOrientation(camera.getN(), new Vector3f(0.0f, 1.0f, 0.0f));
+
+}
+
 
 }
