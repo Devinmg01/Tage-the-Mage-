@@ -1,6 +1,6 @@
 package myGame.entity;
 
-import org.joml.Vector3f;
+import org.joml.Matrix4f;
 import tage.GameObject;
 import tage.ObjShape;
 import tage.TextureImage;

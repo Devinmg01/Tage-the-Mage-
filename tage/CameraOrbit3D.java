@@ -78,7 +78,7 @@ public class CameraOrbit3D {
         float xLocal = zoomDistance * (float) Math.cos(radElev) * (float) Math.sin((float) Math.toRadians(orbitAngle));
         float yLocal = zoomDistance * (float) Math.sin(radElev);
         float zLocal = zoomDistance * (float) Math.cos(radElev) * (float) Math.cos(radOrbit);
-        Vector3f localOffset = new Vector3f(xLocal, yLocal, -zLocal);
+        Vector3f localOffset = new Vector3f(xLocal, yLocal, zLocal);
 
         // Convert object's local space to world space
         Vector3f worldOffset = new Vector3f();
@@ -87,7 +87,7 @@ public class CameraOrbit3D {
         // Compute the new camera position
         Vector3f newCameraPos = new Vector3f(objPos).add(worldOffset);
         camera.setLocation(newCameraPos);
-        
+
         // Have the camera look at the object
         camera.lookAt(object.getWorldLocation());
     }

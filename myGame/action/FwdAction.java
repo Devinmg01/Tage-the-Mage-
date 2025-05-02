@@ -14,7 +14,6 @@ public class FwdAction extends AbstractInputAction {
     private GameObject terrain;
     private boolean reverse;
     private float amount;
-    private int ticks = 0;
 
     public FwdAction(GameObject object, ClientManager clientManager, GameObject terrian, boolean reverse) {
         this.object = object;
@@ -31,6 +30,20 @@ public class FwdAction extends AbstractInputAction {
         object.setLocalLocation(newLoc);
     }
 
+    public void animate() {
+        Avatar avatar = (Avatar) object;
+
+        // Mark walking state and update input time
+        avatar.setWalking(true);
+        avatar.updateLastInputTime();
+
+        // Only plays if not already playing WALKING
+        if (!"WALKING".equals(avatar.getCurrentAnimation())) {
+            avatar.getAnimatedShape().playAnimation("WALKING", 0.5f, AnimatedShape.EndType.LOOP, 0);
+            avatar.setCurrentAnimation("WALKING");
+        }
+    }
+
     @Override
     public void performAction(float elapsTime, Event e) {
         if (reverse) {
@@ -41,22 +54,12 @@ public class FwdAction extends AbstractInputAction {
 
         moveForward(elapsTime, amount);
 
+        if (object instanceof Avatar) {
+            animate();
+        }
+
         if (clientManager != null) {
             clientManager.sendMoveMessage(object.getWorldLocation());
-        }
-        // Animation logic only for Avatar
-        if (object instanceof Avatar) {
-            Avatar avatar = (Avatar) object;
-
-            // Mark walking state and update input time
-            avatar.setWalking(true);
-            avatar.updateLastInputTime();
-
-            // Only plays if not already playing WALKING
-            if (!"WALKING".equals(avatar.getCurrentAnimation())) {
-                avatar.getAnimatedShape().playAnimation("WALKING", 0.33f, AnimatedShape.EndType.LOOP, 0);
-                avatar.setCurrentAnimation("WALKING");
-            }
         }
     }
 }

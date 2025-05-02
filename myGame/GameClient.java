@@ -9,8 +9,8 @@ import tage.*;
 import tage.input.InputManager;
 import tage.shapes.*;
 import tage.audio.*;
-import tage.Camera;
-import org.joml.*;
+import org.joml.Vector3f;
+import org.joml.Matrix4f;
 import net.java.games.input.*;
 import net.java.games.input.Component.Identifier.*;
 
@@ -26,6 +26,7 @@ public class GameClient extends VariableFrameRateGame {
 	private ClientManager clientManager;
 	private GhostManager ghostManager;
 	private EnemyManager enemyManager;
+
 	private CameraOrbit3D cam;
 	private Avatar avatar;
 	private GameObject terrain, wizardTower;
@@ -59,7 +60,6 @@ public class GameClient extends VariableFrameRateGame {
 
 	@Override
 	public void loadShapes() {
-    
         terrainShape = new TerrainPlane();
         avatarShape = new ImportedModel("wizard999.obj");
         wizardTowerShape = new ImportedModel("wizardTower.obj");
@@ -68,10 +68,6 @@ public class GameClient extends VariableFrameRateGame {
 		wizardShape.loadAnimation("CAST", "fireball.rka");
 		wizardShape.loadAnimation("IDLE", "idle.rka");
 		wizardShape.loadAnimation("WALKING", "walking.rka");
-		//wizardShape.playAnimation("IDLE", 0.5f, AnimatedShape.EndType.LOOP, 0);
-
-
-   
 	}
 
 	@Override
@@ -81,35 +77,27 @@ public class GameClient extends VariableFrameRateGame {
 		wizardTowerTex = new TextureImage("wizardTowerUV.png");
 		goblinTex = new TextureImage("goblin3.png"); 
 	}
-	
 
 	@Override
 	public void buildObjects() {
 		// Terrain
 		terrain = new GameObject(GameObject.root(), terrainShape, terrainTex);
-		terrain.setLocalScale(new Matrix4f().scaling(300f, 40f, 300f)); // x and z cover more area while y leads to
-																		// taller and deeper valleys
+		terrain.setLocalScale(new Matrix4f().scaling(300f, 40f, 300f));
 		terrain.setLocalTranslation(new Matrix4f().translation(0f, 0f, 0f));
 		terrain.getRenderStates().setTiling(2);
-		terrain.getRenderStates().setTileFactor(50);
+		terrain.getRenderStates().setTileFactor(75);
 		terrain.setIsTerrain(true); // terrain for height queries
 		terrain.setHeightMap(new TextureImage("../terrain/HeightmapTest.png"));
 
 		// Avatar
 		avatar = new Avatar(GameObject.root(), wizardShape, avatarTextures[0]);
 		avatar.setLocalTranslation(new Matrix4f().translation(-8f, 26f, -140f));
-		avatar.setLocalScale(new Matrix4f().scaling(1.0f));
-
-		//goblin
-		GameObject goblin = new GameObject(GameObject.root(), goblinShape, goblinTex);
-		goblin.getRenderStates().hasLighting(true);
-		goblin.setLocalScale(new Matrix4f().scaling(0.2f));
-		goblin.setLocalTranslation(new Matrix4f().translation(-20f, 9.5f, -30f));
+		avatar.setLocalRotation(new Matrix4f().rotateY((float)Math.toRadians(180)));
 
 		// Tower
 		wizardTower = new GameObject(GameObject.root(), wizardTowerShape, wizardTowerTex);
 		wizardTower.getRenderStates().hasLighting(true);
-		wizardTower.setLocalScale(new Matrix4f().scaling(5f));
+		wizardTower.setLocalScale(new Matrix4f().scaling(8f));
 		wizardTower.setLocalTranslation(new Matrix4f().translation(-13f, 27f, -142f));
 
 		// Hud Color
@@ -164,18 +152,8 @@ public class GameClient extends VariableFrameRateGame {
 
 		im.update((float) elapseFrameTime);
 
-		wizardShape.updateAnimation();
-
-		if ((System.currentTimeMillis() - avatar.getLastInputTime()) > 500) {
-    		if (!"IDLE".equals(avatar.getCurrentAnimation())) {
-        		avatar.getAnimatedShape().playAnimation("IDLE", 0.25f, AnimatedShape.EndType.LOOP, 0);
-        		avatar.setCurrentAnimation("IDLE");
-        		avatar.setWalking(false);
-    		}
-		}
-
 		// Update game states
-		updateStates((float) elapseFrameTime);
+		updateStates((float) elapseFrameTime, currFrameTime);
 
 		// Process networking
 		processNetworking();
@@ -195,8 +173,8 @@ public class GameClient extends VariableFrameRateGame {
 		im = engine.getInputManager();
 
 		// Actions
-		FwdAction moveForward = new FwdAction(avatar, clientManager, terrain, false);
-		FwdAction moveBack = new FwdAction(avatar, clientManager, terrain, true);
+		FwdAction moveForward = new FwdAction(avatar, clientManager, terrain, true);
+		FwdAction moveBack = new FwdAction(avatar, clientManager, terrain, false);
 		TurnAction turnLeft = new TurnAction(avatar, true);
 		TurnAction turnRight = new TurnAction(avatar, false);
 		ZoomOrbitAction zoomInOrbit = new ZoomOrbitAction(cam, false);
@@ -230,9 +208,6 @@ public class GameClient extends VariableFrameRateGame {
 				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
 		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.ESCAPE, exitGame,
 				InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
-		
-
-
 
 		// Gamepad bindings
 		im.associateActionWithAllGamepads(net.java.games.input.Component.Identifier.Axis.Y, moveBack,
@@ -299,7 +274,7 @@ public class GameClient extends VariableFrameRateGame {
 	 * Initializes the enemy manager and spawns initial enemies
 	 */
 	private void setupEnemies() {
-		enemyManager = new EnemyManager(avatarShape, avatarTextures[0], wizardTower.getWorldLocation(), 1.0f,
+		enemyManager = new EnemyManager(goblinShape, goblinTex, wizardTower.getWorldLocation(), 1.0f,
 				terrain, clientManager, -100f, 100f, -100f, 100f);
 		for (int i = 0; i < 5; i++) {
 			enemyManager.spawnEnemy();
@@ -309,9 +284,18 @@ public class GameClient extends VariableFrameRateGame {
 	/**
 	 * Updates the game states and parameters
 	 */
-	private void updateStates(float elapseFrameTime) {
+	private void updateStates(float elapseFrameTime, double currFrameTime) {
 		cam.update();
 		enemyManager.update(elapseFrameTime);
+		wizardShape.updateAnimation();
+
+		if ((currFrameTime - avatar.getLastInputTime()) > 500) {
+			if (!"IDLE".equals(avatar.getCurrentAnimation())) {
+				avatar.getAnimatedShape().playAnimation("IDLE", 0.25f, AnimatedShape.EndType.LOOP, 0);
+				avatar.setCurrentAnimation("IDLE");
+				avatar.setWalking(false);
+			}
+		}
 	}
 
 	/**

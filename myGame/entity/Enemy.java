@@ -2,6 +2,7 @@ package myGame.entity;
 
 import myGame.action.FwdAction;
 import myGame.utility.ClientManager;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import tage.GameObject;
 import tage.ObjShape;
@@ -27,13 +28,14 @@ public class Enemy extends GameCharacter {
         this.targetLoc = targetLoc;
         this.fwdAction = new FwdAction(this, clientManager, terrain, false);
         setLocalLocation(spawnLoc);
+        setLocalScale(new Matrix4f().scaling(0.25f));
     }
 
     /**
      * Update the enemy's position towards the target
      */
     public void move(float elapsedTime) {
-        if (getLocalLocation().distance(targetLoc) >= 3.5f) {
+        if (getLocalLocation().distance(targetLoc) >= 5.5f) {
             lookAt(targetLoc);
             fwdAction.moveForward(elapsedTime, getSpeed());
         }
