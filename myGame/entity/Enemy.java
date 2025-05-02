@@ -2,7 +2,6 @@ package myGame.entity;
 
 import myGame.action.FwdAction;
 import myGame.utility.ClientManager;
-import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import tage.GameObject;
 import tage.ObjShape;
@@ -32,7 +31,6 @@ public class Enemy extends GameCharacter {
         this.fwdAction = new FwdAction(this, clientManager, terrain, false, walkSound);
         
         setLocalLocation(spawnLoc);
-        setLocalScale(new Matrix4f().scaling(0.25f));
     }
 
     /**
