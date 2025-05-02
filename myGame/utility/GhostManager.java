@@ -29,7 +29,7 @@ public class GhostManager {
         if (!ghosts.containsKey(id)) {
             ObjShape ghostShape = game.getAvatarShape();
             TextureImage ghostTex = game.getAvatarTexture(skin);
-            GhostAvatar ghost = new GhostAvatar(ghostShape, ghostTex, id, position);
+            GhostAvatar ghost = new GhostAvatar(ghostShape, ghostTex, game, id, position);
             ghosts.put(id, ghost);
         }
     }

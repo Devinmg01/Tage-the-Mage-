@@ -1,5 +1,6 @@
 package myGame.entity;
 
+import myGame.GameClient;
 import org.joml.Matrix4f;
 import tage.GameObject;
 import tage.ObjShape;
@@ -25,9 +26,10 @@ public class Avatar extends GameCharacter {
     /**
      * Construct GameAvatar object with the specified parameters
      */
-    public Avatar(GameObject object, ObjShape shape, TextureImage texture) {
-        super(object, shape, texture, DEFAULT_HEALTH, DEFAULT_SPEED);
+    public Avatar(GameObject object, ObjShape shape, TextureImage texture, GameClient game) {
+        super(object, shape, texture, game, DEFAULT_HEALTH, DEFAULT_SPEED);
         setLocalScale(new Matrix4f().scaling(0.35f));
+        initPhysics(1f, 0.5f, 2f);
     }
 
     /**

@@ -1,5 +1,6 @@
 package myGame.entity;
 
+import myGame.GameClient;
 import tage.GameObject;
 import tage.ObjShape;
 import tage.TextureImage;
@@ -14,8 +15,8 @@ public class GhostAvatar extends Avatar {
     /**
      * Construct GameAvatar object with the specified parameters
      */
-    public GhostAvatar(ObjShape shape, TextureImage texture, UUID id, Vector3f position) {
-        super(new GameObject(GameObject.root(), shape, texture), shape, texture);
+    public GhostAvatar(ObjShape shape, TextureImage texture, GameClient game, UUID id, Vector3f position) {
+        super(new GameObject(GameObject.root(), shape, texture), shape, texture, game);
         this.id = id;
         setLocalLocation(position);
     }

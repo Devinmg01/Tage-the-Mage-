@@ -11,6 +11,7 @@ import tage.shapes.*;
 import tage.audio.*;
 import org.joml.Vector3f;
 import org.joml.Matrix4f;
+import org.joml.AxisAngle4f;
 import net.java.games.input.*;
 import net.java.games.input.Component.Identifier.*;
 
@@ -18,10 +19,17 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
+import tage.physics.PhysicsEngine;
+import tage.physics.PhysicsObject;
+import tage.physics.JBullet.*;
+import com.bulletphysics.dynamics.RigidBody;
+import com.bulletphysics.collision.dispatch.CollisionObject;
+
 public class GameClient extends VariableFrameRateGame {
 
 	// Class Variables
 	private static Engine engine;
+	private PhysicsEngine physicsEngine;
 	private InputManager im;
 	private ClientManager clientManager;
 	private GhostManager ghostManager;
@@ -61,9 +69,9 @@ public class GameClient extends VariableFrameRateGame {
 	@Override
 	public void loadShapes() {
         terrainShape = new TerrainPlane();
-        avatarShape = new ImportedModel("wizard999.obj");
-        wizardTowerShape = new ImportedModel("wizardTower.obj");
-        goblinShape = new ImportedModel("goblin3.obj"); 
+        avatarShape = new ImportedModel("wizard.obj");
+        wizardTowerShape = new ImportedModel("tower.obj");
+        goblinShape = new ImportedModel("goblin.obj");
 		wizardShape = new AnimatedShape("wizardmeshy.rkm", "wizardskelly.rks");
 		wizardShape.loadAnimation("CAST", "fireball.rka");
 		wizardShape.loadAnimation("IDLE", "idle.rka");
@@ -87,18 +95,18 @@ public class GameClient extends VariableFrameRateGame {
 		terrain.getRenderStates().setTiling(2);
 		terrain.getRenderStates().setTileFactor(75);
 		terrain.setIsTerrain(true); // terrain for height queries
-		terrain.setHeightMap(new TextureImage("../terrain/HeightmapTest.png"));
+		//terrain.setHeightMap(new TextureImage("../terrain/HeightmapTest.png"));
 
 		// Avatar
-		avatar = new Avatar(GameObject.root(), wizardShape, avatarTextures[0]);
-		avatar.setLocalTranslation(new Matrix4f().translation(-8f, 26f, -140f));
+		avatar = new Avatar(GameObject.root(), wizardShape, avatarTextures[0], this);
+		avatar.setLocalTranslation(new Matrix4f().translation(0f, 0f, -140f)); // y:26 for heightmap
 		avatar.setLocalRotation(new Matrix4f().rotateY((float)Math.toRadians(180)));
 
 		// Tower
 		wizardTower = new GameObject(GameObject.root(), wizardTowerShape, wizardTowerTex);
 		wizardTower.getRenderStates().hasLighting(true);
 		wizardTower.setLocalScale(new Matrix4f().scaling(8f));
-		wizardTower.setLocalTranslation(new Matrix4f().translation(-13f, 27f, -142f));
+		wizardTower.setLocalTranslation(new Matrix4f().translation(-13f, 0f, -142f)); // y:27 for heightmap
 
 		// Hud Color
 		hud1Color = new Vector3f(1, 0, 0);
@@ -127,6 +135,15 @@ public class GameClient extends VariableFrameRateGame {
 	public void initializeGame() {
 		(engine.getRenderSystem()).setWindowDimensions(1900, 1000);
 		cam = new CameraOrbit3D((engine.getRenderSystem()).getViewport("MAIN").getCamera(), avatar);
+
+		physicsEngine = engine.getSceneGraph().getPhysicsEngine();
+		physicsEngine.setGravity(new float[]{0f, -9.8f, 0f});
+		//engine.enablePhysicsWorldRender();
+
+		double[] towerTransform = toDoubleArray(wizardTower.getLocalTranslation().get(new float[16]));
+		float[] size = new float[]{ 4f, 20f, 4f };
+		PhysicsObject towerBody = engine.getSceneGraph().addPhysicsBox(0f, towerTransform, size);
+		wizardTower.setPhysicsObject(towerBody);
 
 		// Initialize Network Client Manager
 		setupNetworking();
@@ -173,8 +190,8 @@ public class GameClient extends VariableFrameRateGame {
 		im = engine.getInputManager();
 
 		// Actions
-		FwdAction moveForward = new FwdAction(avatar, clientManager, terrain, true);
-		FwdAction moveBack = new FwdAction(avatar, clientManager, terrain, false);
+		FwdAction moveForward = new FwdAction(avatar, clientManager, terrain, this, true);
+		FwdAction moveBack = new FwdAction(avatar, clientManager, terrain, this,  false);
 		TurnAction turnLeft = new TurnAction(avatar, true);
 		TurnAction turnRight = new TurnAction(avatar, false);
 		ZoomOrbitAction zoomInOrbit = new ZoomOrbitAction(cam, false);
@@ -274,8 +291,8 @@ public class GameClient extends VariableFrameRateGame {
 	 * Initializes the enemy manager and spawns initial enemies
 	 */
 	private void setupEnemies() {
-		enemyManager = new EnemyManager(goblinShape, goblinTex, wizardTower.getWorldLocation(), 1.0f,
-				terrain, clientManager, -100f, 100f, -100f, 100f);
+		enemyManager = new EnemyManager(goblinShape, goblinTex, wizardTower.getWorldLocation(), this,
+				1.0f, -100f, 100f, -100f, 100f);
 		for (int i = 0; i < 5; i++) {
 			enemyManager.spawnEnemy();
 		}
@@ -310,6 +327,32 @@ public class GameClient extends VariableFrameRateGame {
 				(int) ((main.getActualWidth() - (main.getActualWidth() / 2)) - (hud1Str.length() * 8 / 2)), 15);
 	}
 
+	/**
+	 * Converts doubles array to float array
+	 */
+	public float[] toFloatArray(double[] arr)
+	{ if (arr == null) return null;
+		int n = arr.length;
+		float[] ret = new float[n];
+		for (int i = 0; i < n; i++)
+		{ ret[i] = (float)arr[i];
+		}
+		return ret;
+	}
+
+	/**
+	 * Converts the float array to a doubles array
+	 */
+	public double[] toDoubleArray(float[] arr)
+	{ if (arr == null) return null;
+		int n = arr.length;
+		double[] ret = new double[n];
+		for (int i = 0; i < n; i++)
+		{ ret[i] = (double)arr[i];
+		}
+		return ret;
+	}
+
 	/*
 	 * =========================== Getters and Setters ===========================
 	 */
@@ -319,6 +362,13 @@ public class GameClient extends VariableFrameRateGame {
 	 */
 	public Engine getEngine() {
 		return engine;
+	}
+
+	/**
+	 * @return the client manager
+	 */
+	public ClientManager getClientManager() {
+		return clientManager;
 	}
 
 	/**
@@ -333,6 +383,13 @@ public class GameClient extends VariableFrameRateGame {
 	 */
 	public EnemyManager getEnemyManager() {
 		return enemyManager;
+	}
+
+	/**
+	 * @return the terrain
+	 */
+	public GameObject getTerrain() {
+		return terrain;
 	}
 
 	/**
