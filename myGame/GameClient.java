@@ -50,7 +50,7 @@ public class GameClient extends VariableFrameRateGame {
 
 	private AnimatedShape wizardShape;
 	private IAudioManager audioMgr;
-	private Sound wizardSound, ambientSound, walkSound;
+	private Sound wizardSound, ambientSound, walkSound, goblinSound;
 
 
 	public GameClient(String serverAddress, int serverPort) {
@@ -87,6 +87,28 @@ public class GameClient extends VariableFrameRateGame {
 	}
 
 	@Override
+	public void loadSounds() {
+    	audioMgr = engine.getAudioManager();
+    	AudioResource walkRes = audioMgr.createAudioResource("grassWalk.wav", AudioResourceType.AUDIO_SAMPLE);
+
+    	walkSound = new Sound(walkRes, SoundType.SOUND_EFFECT, 50, true);
+    	walkSound.initialize(audioMgr);
+
+    	walkSound.setMaxDistance(10.0f);
+    	walkSound.setMinDistance(5.0f);
+    	walkSound.setRollOff(5.0f);
+
+		AudioResource gruntRes = audioMgr.createAudioResource("goblinLaugh.wav", AudioResourceType.AUDIO_SAMPLE);
+		goblinSound = new Sound(gruntRes, SoundType.SOUND_EFFECT, 100, false);
+		goblinSound.initialize(audioMgr);
+
+		goblinSound.setMaxDistance(10.0f);
+    	goblinSound.setMinDistance(5.0f);
+    	goblinSound.setRollOff(5.0f);
+		//goblinSound.play();
+	}
+
+	@Override
 	public void buildObjects() {
 		// Terrain
 		terrain = new GameObject(GameObject.root(), terrainShape, terrainTex);
@@ -99,14 +121,14 @@ public class GameClient extends VariableFrameRateGame {
 
 		// Avatar
 		avatar = new Avatar(GameObject.root(), wizardShape, avatarTextures[0], this);
-		avatar.setLocalTranslation(new Matrix4f().translation(0f, 0f, -140f)); // y:26 for heightmap
+		avatar.setLocalTranslation(new Matrix4f().translation(0f, 0f, -140f));
 		avatar.setLocalRotation(new Matrix4f().rotateY((float)Math.toRadians(180)));
 
 		// Tower
 		wizardTower = new GameObject(GameObject.root(), wizardTowerShape, wizardTowerTex);
 		wizardTower.getRenderStates().hasLighting(true);
 		wizardTower.setLocalScale(new Matrix4f().scaling(8f));
-		wizardTower.setLocalTranslation(new Matrix4f().translation(-13f, 0f, -142f)); // y:27 for heightmap
+		wizardTower.setLocalTranslation(new Matrix4f().translation(-13f, 0f, -142f));
 
 		// Hud Color
 		hud1Color = new Vector3f(1, 0, 0);
@@ -169,6 +191,25 @@ public class GameClient extends VariableFrameRateGame {
 
 		im.update((float) elapseFrameTime);
 
+		wizardShape.updateAnimation();
+
+		setEarParameters();
+
+		if ((System.currentTimeMillis() - avatar.getLastInputTime()) > 500) {
+    		if (!"IDLE".equals(avatar.getCurrentAnimation())) {
+        		avatar.getAnimatedShape().playAnimation("IDLE", 0.25f, AnimatedShape.EndType.LOOP, 0);
+        		avatar.setCurrentAnimation("IDLE");
+        		avatar.setWalking(false);
+
+
+				if (walkSound.getIsPlaying()) {
+				walkSound.stop();
+				}
+    		}
+		}
+
+
+
 		// Update game states
 		updateStates((float) elapseFrameTime, currFrameTime);
 
@@ -190,8 +231,8 @@ public class GameClient extends VariableFrameRateGame {
 		im = engine.getInputManager();
 
 		// Actions
-		FwdAction moveForward = new FwdAction(avatar, clientManager, terrain, this, true);
-		FwdAction moveBack = new FwdAction(avatar, clientManager, terrain, this,  false);
+		FwdAction moveForward = new FwdAction(avatar, clientManager, terrain, this, true, walkSound);
+		FwdAction moveBack = new FwdAction(avatar, clientManager, terrain, this,  false, walkSound);
 		TurnAction turnLeft = new TurnAction(avatar, true);
 		TurnAction turnRight = new TurnAction(avatar, false);
 		ZoomOrbitAction zoomInOrbit = new ZoomOrbitAction(cam, false);
@@ -292,7 +333,7 @@ public class GameClient extends VariableFrameRateGame {
 	 */
 	private void setupEnemies() {
 		enemyManager = new EnemyManager(goblinShape, goblinTex, wizardTower.getWorldLocation(), this,
-				1.0f, -100f, 100f, -100f, 100f);
+				1.0f, -100f, 100f, -100f, 100f, walkSound, goblinSound,avatar);
 		for (int i = 0; i < 5; i++) {
 			enemyManager.spawnEnemy();
 		}
@@ -304,15 +345,6 @@ public class GameClient extends VariableFrameRateGame {
 	private void updateStates(float elapseFrameTime, double currFrameTime) {
 		cam.update();
 		enemyManager.update(elapseFrameTime);
-		wizardShape.updateAnimation();
-
-		if ((currFrameTime - avatar.getLastInputTime()) > 500) {
-			if (!"IDLE".equals(avatar.getCurrentAnimation())) {
-				avatar.getAnimatedShape().playAnimation("IDLE", 0.25f, AnimatedShape.EndType.LOOP, 0);
-				avatar.setCurrentAnimation("IDLE");
-				avatar.setWalking(false);
-			}
-		}
 	}
 
 	/**
@@ -424,4 +456,10 @@ public class GameClient extends VariableFrameRateGame {
 		this.isClientConnected = isClientConnected;
 	}
 
+	public void setEarParameters() {
+    	Camera camera = engine.getRenderSystem().getViewport("MAIN").getCamera();
+    	audioMgr.getEar().setLocation(camera.getLocation());
+		audioMgr.getEar().setOrientation(camera.getN(), new Vector3f(0.0f, 1.0f, 0.0f));
+
+    }
 }

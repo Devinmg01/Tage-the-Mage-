@@ -7,8 +7,9 @@ import org.joml.Vector3f;
 import tage.GameObject;
 import tage.ObjShape;
 import tage.TextureImage;
-
 import java.util.UUID;
+import tage.audio.*;
+
 
 public class Enemy extends GameCharacter {
 
@@ -24,12 +25,12 @@ public class Enemy extends GameCharacter {
      * Construct Enemy object with the specified parameters
      */
     public Enemy(UUID id, GameObject object, ObjShape shape, TextureImage texture, GameClient game,
-                 Vector3f spawnLoc, Vector3f targetLoc) {
+                 Sound walkSound, Vector3f spawnLoc, Vector3f targetLoc) {
         super(object, shape, texture, game, DEFAULT_HEALTH, DEFAULT_SPEED);
         this.id = id;
         this.game = game;
         this.targetLoc = targetLoc;
-        this.fwdAction = new FwdAction(this, game.getClientManager(), game.getTerrain(), game, false);
+        this.fwdAction = new FwdAction(this, game.getClientManager(), game.getTerrain(), game, walkSound, false);
         setLocalLocation(spawnLoc);
         setLocalScale(new Matrix4f().scaling(0.25f));
         initPhysics(1f, 0.5f, 2f);
@@ -40,7 +41,8 @@ public class Enemy extends GameCharacter {
      * Update the enemy's position towards the target
      */
     public void move(float elapsedTime) {
-        if (getLocalLocation().distance(targetLoc) >= 5.5f &&
+
+        if (getLocalLocation().distance(targetLoc) >= 3.5f &&
             !checkCollision(game.getAvatar())) {
             fwdAction.moveForward(elapsedTime, getSpeed());
         }

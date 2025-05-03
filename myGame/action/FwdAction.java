@@ -10,6 +10,8 @@ import tage.input.action.AbstractInputAction;
 import tage.shapes.AnimatedShape;
 import net.java.games.input.Event;
 import org.joml.*;
+import tage.audio.*;
+
 
 public class FwdAction extends AbstractInputAction {
     private GameClient game;
@@ -18,13 +20,16 @@ public class FwdAction extends AbstractInputAction {
     private GameObject terrain;
     private boolean reverse;
     private float amount;
+    private int ticks = 0;
+    private Sound walkSound;
 
-    public FwdAction(GameCharacter object, ClientManager clientManager, GameObject terrain, GameClient game, boolean reverse) {
+    public FwdAction(GameCharacter object, ClientManager clientManager, GameObject terrain, GameClient game, boolean reverse, Sound walkSound) {
         this.object = object;
         this.game = game;
         this.clientManager = clientManager;
         this.terrain = terrain;
         this.reverse = reverse;
+        this.walkSound = walkSound;
     }
 
     public void moveForward(float elapsTime, float amount) {
@@ -39,7 +44,7 @@ public class FwdAction extends AbstractInputAction {
         // Move physics object
         float physHalf = object.getPhysicsBodyHalfHeight();
         Matrix4f physMat = new Matrix4f().translation(new Vector3f(newLoc.x, terrainY + physHalf, newLoc.z));
-        object.getPhysicsBody().setTransform(toDoubleArray(physMat.get(new float[16])));
+        object.getPhysicsBody().setTransform(game.toDoubleArray(physMat.get(new float[16])));
     }
 
     public void animate() {
@@ -54,16 +59,6 @@ public class FwdAction extends AbstractInputAction {
             avatar.getAnimatedShape().playAnimation("WALKING", 0.5f, AnimatedShape.EndType.LOOP, 0);
             avatar.setCurrentAnimation("WALKING");
         }
-    }
-
-    public double[] toDoubleArray(float[] arr)
-    { if (arr == null) return null;
-        int n = arr.length;
-        double[] ret = new double[n];
-        for (int i = 0; i < n; i++)
-        { ret[i] = (double)arr[i];
-        }
-        return ret;
     }
 
     @Override

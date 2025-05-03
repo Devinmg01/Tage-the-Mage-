@@ -19,6 +19,7 @@ public class GhostAvatar extends Avatar {
         super(new GameObject(GameObject.root(), shape, texture), shape, texture, game);
         this.id = id;
         setLocalLocation(position);
+        setLocalScale(new Matrix4f().scaling(1.0f));
     }
 
     /**
