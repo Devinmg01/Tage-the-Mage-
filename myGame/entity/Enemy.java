@@ -1,7 +1,8 @@
 package myGame.entity;
 
+import myGame.GameClient;
 import myGame.action.FwdAction;
-import myGame.utility.ClientManager;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import tage.GameObject;
 import tage.ObjShape;
@@ -13,42 +14,38 @@ import tage.audio.*;
 public class Enemy extends GameCharacter {
 
     // Class Variables
+    private GameClient game;
     private static final int DEFAULT_HEALTH = 2;
     private static final float DEFAULT_SPEED = 0.25f;
     private UUID id;
     private Vector3f targetLoc;
     private FwdAction fwdAction;
-    
 
     /**
      * Construct Enemy object with the specified parameters
      */
-    public Enemy(UUID id, GameObject object, ObjShape shape, TextureImage texture, Vector3f spawnLoc,
-            Vector3f targetLoc, GameObject terrain, ClientManager clientManager, Sound walkSound) {
-        super(object, shape, texture, DEFAULT_HEALTH, DEFAULT_SPEED);
+    public Enemy(UUID id, GameObject object, ObjShape shape, TextureImage texture, GameClient game,
+                 Vector3f spawnLoc, Vector3f targetLoc) {
+        super(object, shape, texture, game, DEFAULT_HEALTH);
         this.id = id;
+        this.game = game;
         this.targetLoc = targetLoc;
-        this.fwdAction = new FwdAction(this, clientManager, terrain, false, walkSound);
-        
+        this.fwdAction = new FwdAction(this, game, false);
         setLocalLocation(spawnLoc);
+        setLocalScale(new Matrix4f().scaling(0.25f));
+        initPhysics(1f, 0.5f, 2f);
+        lookAt(targetLoc);
     }
 
     /**
      * Update the enemy's position towards the target
      */
     public void move(float elapsedTime) {
-        
-        if (getLocalLocation().distance(targetLoc) >= 3.5f) {
-            lookAt(targetLoc);
-            fwdAction.moveForward(elapsedTime, getSpeed());
+
+        if (getLocalLocation().distance(targetLoc) >= 5f &&
+            !checkCollision(game.getAvatar())) {
+            fwdAction.moveForward(elapsedTime, DEFAULT_SPEED);
         }
-
-        
- 
-
-        
-
-
     }
 
     /**
