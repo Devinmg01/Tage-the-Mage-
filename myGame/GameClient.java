@@ -123,7 +123,7 @@ public class GameClient extends VariableFrameRateGame {
 		terrain.getRenderStates().setTiling(2);
 		terrain.getRenderStates().setTileFactor(50);
 		terrain.setIsTerrain(true); // terrain for height queries
-		terrain.setHeightMap(new TextureImage("../terrain/HeightmapTest.png"));
+		terrain.setHeightMap(new TextureImage("../terrain/HeightMap surround.png"));
 
 		// Avatar
 		avatar = new Avatar(GameObject.root(), wizardShape, avatarTextures[0]);
