@@ -11,13 +11,7 @@ public class Avatar extends GameCharacter {
 
     // Class Variables
     private static final int DEFAULT_HEALTH = 10;
-    private static final float DEFAULT_SPEED = 1.5f;
-    private static final int DEFAULT_ATTACK_POWER = 1;
-    private static final float DEFAULT_ATTACK_SPEED = 1.0f;
     private static final long idleDelay = 500; // 0.5 seconds
-
-    private int attackPower = DEFAULT_ATTACK_POWER;
-    private float attackSpeed = DEFAULT_ATTACK_SPEED;
     private int score = 0;
     private boolean walking = false;
     private long lastInputTime = System.currentTimeMillis();
@@ -27,37 +21,9 @@ public class Avatar extends GameCharacter {
      * Construct GameAvatar object with the specified parameters
      */
     public Avatar(GameObject object, ObjShape shape, TextureImage texture, GameClient game) {
-        super(object, shape, texture, game, DEFAULT_HEALTH, DEFAULT_SPEED);
+        super(object, shape, texture, game, DEFAULT_HEALTH);
         setLocalScale(new Matrix4f().scaling(0.35f));
         initPhysics(1f, 0.5f, 2f);
-    }
-
-    /**
-     * @return attack power of the avatar
-     */
-    public int getAttackPower() {
-        return attackPower;
-    }
-
-    /**
-     * Set avatar attack power to a specified amount
-     */
-    public void setAttackPower(int amount) {
-        this.attackPower = Math.max(attackPower, DEFAULT_ATTACK_POWER);
-    }
-
-    /**
-     * @return attack speed of the avatar
-     */
-    public float getAttackSpeed() {
-        return attackSpeed;
-    }
-
-    /**
-     * Set avatar attack speed to a specified amount
-     */
-    public void setAttackSpeed(float amount) {
-        this.attackSpeed = Math.max(attackSpeed, DEFAULT_ATTACK_SPEED);
     }
 
     /**

@@ -25,12 +25,12 @@ public class Enemy extends GameCharacter {
      * Construct Enemy object with the specified parameters
      */
     public Enemy(UUID id, GameObject object, ObjShape shape, TextureImage texture, GameClient game,
-                 Sound walkSound, Vector3f spawnLoc, Vector3f targetLoc) {
-        super(object, shape, texture, game, DEFAULT_HEALTH, DEFAULT_SPEED);
+                 Vector3f spawnLoc, Vector3f targetLoc) {
+        super(object, shape, texture, game, DEFAULT_HEALTH);
         this.id = id;
         this.game = game;
         this.targetLoc = targetLoc;
-        this.fwdAction = new FwdAction(this, game.getClientManager(), game.getTerrain(), game, walkSound, false);
+        this.fwdAction = new FwdAction(this, game, false);
         setLocalLocation(spawnLoc);
         setLocalScale(new Matrix4f().scaling(0.25f));
         initPhysics(1f, 0.5f, 2f);
@@ -42,9 +42,9 @@ public class Enemy extends GameCharacter {
      */
     public void move(float elapsedTime) {
 
-        if (getLocalLocation().distance(targetLoc) >= 3.5f &&
+        if (getLocalLocation().distance(targetLoc) >= 5f &&
             !checkCollision(game.getAvatar())) {
-            fwdAction.moveForward(elapsedTime, getSpeed());
+            fwdAction.moveForward(elapsedTime, DEFAULT_SPEED);
         }
     }
 

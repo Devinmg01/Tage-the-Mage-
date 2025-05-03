@@ -20,16 +20,15 @@ public class FwdAction extends AbstractInputAction {
     private GameObject terrain;
     private boolean reverse;
     private float amount;
-    private int ticks = 0;
     private Sound walkSound;
 
-    public FwdAction(GameCharacter object, ClientManager clientManager, GameObject terrain, GameClient game, boolean reverse, Sound walkSound) {
+    public FwdAction(GameCharacter object, GameClient game, boolean reverse) {
         this.object = object;
         this.game = game;
-        this.clientManager = clientManager;
-        this.terrain = terrain;
         this.reverse = reverse;
-        this.walkSound = walkSound;
+        clientManager = game.getClientManager();
+        terrain = game.getTerrain();
+        walkSound = game.getWalkSound();
     }
 
     public void moveForward(float elapsTime, float amount) {

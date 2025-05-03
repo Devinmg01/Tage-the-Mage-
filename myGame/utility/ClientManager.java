@@ -21,7 +21,7 @@ public class ClientManager extends GameConnectionClient {
     public ClientManager(InetAddress serverAddr, int serverPort, GameClient game) throws IOException {
         super(serverAddr, serverPort, ProtocolType.UDP);
         this.game = game;
-        this.clientId = UUID.randomUUID(); // Unique ID for this client
+        this.clientId = UUID.randomUUID();
         this.ghostManager = game.getGhostManager();
     }
 
@@ -39,7 +39,6 @@ public class ClientManager extends GameConnectionClient {
                     String status = msgTokens[1];
                     if (status.equals("success")) {
                         System.out.println("Join successful");
-                        game.setIsClientConnected(true);
                     } else {
                         System.out.println("Join failed");
                     }

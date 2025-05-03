@@ -11,47 +11,36 @@ import tage.shapes.*;
 import tage.audio.*;
 import org.joml.Vector3f;
 import org.joml.Matrix4f;
-import org.joml.AxisAngle4f;
-import net.java.games.input.*;
-import net.java.games.input.Component.Identifier.*;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
-
 import tage.physics.PhysicsEngine;
 import tage.physics.PhysicsObject;
-import tage.physics.JBullet.*;
-import com.bulletphysics.dynamics.RigidBody;
-import com.bulletphysics.collision.dispatch.CollisionObject;
 
 public class GameClient extends VariableFrameRateGame {
 
 	// Class Variables
 	private static Engine engine;
-	private PhysicsEngine physicsEngine;
 	private InputManager im;
+	private IAudioManager audioMgr;
 	private ClientManager clientManager;
-	private GhostManager ghostManager;
 	private EnemyManager enemyManager;
+	private GhostManager ghostManager;
+	private PhysicsEngine physicsEngine;
 
 	private CameraOrbit3D cam;
 	private Avatar avatar;
-	private GameObject terrain, wizardTower;
-	private ObjShape terrainShape, avatarShape, wizardTowerShape, goblinShape;
-	private TextureImage terrainTex, wizardTowerTex,  goblinTex;
+	private GameObject terrain, tower;
+	private ObjShape terrainShape, avatarShape, towerShape, goblinShape;
+	private AnimatedShape avatarAnimShape;
+	private TextureImage terrainTex, towerTex, goblinTex;
 	private TextureImage[] avatarTextures = new TextureImage[3];
+	private Sound walkSound, goblinSound;
 	private Vector3f hud1Color;
 
 	private double lastFrameTime, currFrameTime, elapseFrameTime;
 	private final String serverAddress;
 	private final int serverPort;
-	private boolean isClientConnected = false;
-
-	private AnimatedShape wizardShape;
-	private IAudioManager audioMgr;
-	private Sound wizardSound, ambientSound, walkSound, goblinSound;
-
 
 	public GameClient(String serverAddress, int serverPort) {
 		super();
@@ -70,38 +59,42 @@ public class GameClient extends VariableFrameRateGame {
 	public void loadShapes() {
         terrainShape = new TerrainPlane();
         avatarShape = new ImportedModel("wizard.obj");
-        wizardTowerShape = new ImportedModel("tower.obj");
+        towerShape = new ImportedModel("tower.obj");
         goblinShape = new ImportedModel("goblin.obj");
-		wizardShape = new AnimatedShape("wizardmeshy.rkm", "wizardskelly.rks");
-		wizardShape.loadAnimation("CAST", "fireball.rka");
-		wizardShape.loadAnimation("IDLE", "idle.rka");
-		wizardShape.loadAnimation("WALKING", "walking.rka");
+
+
+
+
+		avatarAnimShape = new AnimatedShape("wizardmeshy.rkm", "wizardskelly.rks");
+		avatarAnimShape.loadAnimation("CAST", "fireball.rka");
+		avatarAnimShape.loadAnimation("IDLE", "idle.rka");
+		avatarAnimShape.loadAnimation("WALKING", "walking.rka");
 	}
 
 	@Override
 	public void loadTextures() {
 		terrainTex = new TextureImage("../terrain/grass.png");
-		avatarTextures[0] = new TextureImage("WizardUV.png");
-		wizardTowerTex = new TextureImage("wizardTowerUV.png");
-		goblinTex = new TextureImage("goblin3.png"); 
+		avatarTextures[0] = new TextureImage("WizardUV1.png");
+		towerTex = new TextureImage("wizardTowerUV.png");
+		goblinTex = new TextureImage("goblin.png");
 	}
 
 	@Override
 	public void loadSounds() {
     	audioMgr = engine.getAudioManager();
-    	AudioResource walkRes = audioMgr.createAudioResource("grassWalk.wav", AudioResourceType.AUDIO_SAMPLE);
 
+		// Walking Sound
+    	AudioResource walkRes = audioMgr.createAudioResource("grassWalk.wav", AudioResourceType.AUDIO_SAMPLE);
     	walkSound = new Sound(walkRes, SoundType.SOUND_EFFECT, 50, true);
     	walkSound.initialize(audioMgr);
-
     	walkSound.setMaxDistance(10.0f);
     	walkSound.setMinDistance(5.0f);
     	walkSound.setRollOff(5.0f);
 
+		// Goblin Sound
 		AudioResource gruntRes = audioMgr.createAudioResource("goblinLaugh.wav", AudioResourceType.AUDIO_SAMPLE);
 		goblinSound = new Sound(gruntRes, SoundType.SOUND_EFFECT, 100, false);
 		goblinSound.initialize(audioMgr);
-
 		goblinSound.setMaxDistance(10.0f);
     	goblinSound.setMinDistance(5.0f);
     	goblinSound.setRollOff(5.0f);
@@ -116,19 +109,19 @@ public class GameClient extends VariableFrameRateGame {
 		terrain.setLocalTranslation(new Matrix4f().translation(0f, 0f, 0f));
 		terrain.getRenderStates().setTiling(2);
 		terrain.getRenderStates().setTileFactor(75);
-		terrain.setIsTerrain(true); // terrain for height queries
-		//terrain.setHeightMap(new TextureImage("../terrain/HeightmapTest.png"));
+		terrain.setIsTerrain(true);
+		terrain.setHeightMap(new TextureImage("../terrain/Heightmap.png"));
 
 		// Avatar
-		avatar = new Avatar(GameObject.root(), wizardShape, avatarTextures[0], this);
-		avatar.setLocalTranslation(new Matrix4f().translation(0f, 0f, -140f));
+		avatar = new Avatar(GameObject.root(), avatarAnimShape, avatarTextures[0], this);
+		avatar.setLocalTranslation(new Matrix4f().translation(10f, 0f, 0f));
 		avatar.setLocalRotation(new Matrix4f().rotateY((float)Math.toRadians(180)));
 
 		// Tower
-		wizardTower = new GameObject(GameObject.root(), wizardTowerShape, wizardTowerTex);
-		wizardTower.getRenderStates().hasLighting(true);
-		wizardTower.setLocalScale(new Matrix4f().scaling(8f));
-		wizardTower.setLocalTranslation(new Matrix4f().translation(-13f, 0f, -142f));
+		tower = new GameObject(GameObject.root(), towerShape, towerTex);
+		tower.getRenderStates().hasLighting(true);
+		tower.setLocalScale(new Matrix4f().scaling(8f));
+		tower.setLocalTranslation(new Matrix4f().translation(0f, 0f, 0f));
 
 		// Hud Color
 		hud1Color = new Vector3f(1, 0, 0);
@@ -162,10 +155,10 @@ public class GameClient extends VariableFrameRateGame {
 		physicsEngine.setGravity(new float[]{0f, -9.8f, 0f});
 		//engine.enablePhysicsWorldRender();
 
-		double[] towerTransform = toDoubleArray(wizardTower.getLocalTranslation().get(new float[16]));
+		double[] towerTransform = toDoubleArray(tower.getLocalTranslation().get(new float[16]));
 		float[] size = new float[]{ 4f, 20f, 4f };
 		PhysicsObject towerBody = engine.getSceneGraph().addPhysicsBox(0f, towerTransform, size);
-		wizardTower.setPhysicsObject(towerBody);
+		tower.setPhysicsObject(towerBody);
 
 		// Initialize Network Client Manager
 		setupNetworking();
@@ -191,27 +184,12 @@ public class GameClient extends VariableFrameRateGame {
 
 		im.update((float) elapseFrameTime);
 
-		wizardShape.updateAnimation();
+		avatarAnimShape.updateAnimation();
 
 		setEarParameters();
 
-		if ((System.currentTimeMillis() - avatar.getLastInputTime()) > 500) {
-    		if (!"IDLE".equals(avatar.getCurrentAnimation())) {
-        		avatar.getAnimatedShape().playAnimation("IDLE", 0.25f, AnimatedShape.EndType.LOOP, 0);
-        		avatar.setCurrentAnimation("IDLE");
-        		avatar.setWalking(false);
-
-
-				if (walkSound.getIsPlaying()) {
-				walkSound.stop();
-				}
-    		}
-		}
-
-
-
 		// Update game states
-		updateStates((float) elapseFrameTime, currFrameTime);
+		updateStates((float) elapseFrameTime);
 
 		// Process networking
 		processNetworking();
@@ -231,8 +209,8 @@ public class GameClient extends VariableFrameRateGame {
 		im = engine.getInputManager();
 
 		// Actions
-		FwdAction moveForward = new FwdAction(avatar, clientManager, terrain, this, true, walkSound);
-		FwdAction moveBack = new FwdAction(avatar, clientManager, terrain, this,  false, walkSound);
+		FwdAction moveForward = new FwdAction(avatar, this, true);
+		FwdAction moveBack = new FwdAction(avatar, this,  false);
 		TurnAction turnLeft = new TurnAction(avatar, true);
 		TurnAction turnRight = new TurnAction(avatar, false);
 		ZoomOrbitAction zoomInOrbit = new ZoomOrbitAction(cam, false);
@@ -301,15 +279,14 @@ public class GameClient extends VariableFrameRateGame {
 	 * Initializes the network client manager
 	 */
 	private void setupNetworking() {
-		isClientConnected = false;
 		try {
 			ghostManager = new GhostManager(this);
 			clientManager = new ClientManager(InetAddress.getByName(serverAddress), serverPort, this);
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			e.printStackTrace();
 		}
+
 		if (clientManager == null) {
 			System.out.println("Missing server host");
 		} else {
@@ -332,8 +309,7 @@ public class GameClient extends VariableFrameRateGame {
 	 * Initializes the enemy manager and spawns initial enemies
 	 */
 	private void setupEnemies() {
-		enemyManager = new EnemyManager(goblinShape, goblinTex, wizardTower.getWorldLocation(), this,
-				1.0f, -100f, 100f, -100f, 100f, walkSound, goblinSound,avatar);
+		enemyManager = new EnemyManager(goblinShape, goblinTex, this);
 		for (int i = 0; i < 5; i++) {
 			enemyManager.spawnEnemy();
 		}
@@ -342,9 +318,20 @@ public class GameClient extends VariableFrameRateGame {
 	/**
 	 * Updates the game states and parameters
 	 */
-	private void updateStates(float elapseFrameTime, double currFrameTime) {
+	private void updateStates(float elapseFrameTime) {
 		cam.update();
 		enemyManager.update(elapseFrameTime);
+
+		if ((System.currentTimeMillis() - avatar.getLastInputTime()) > 500) {
+			if (!"IDLE".equals(avatar.getCurrentAnimation())) {
+				avatar.getAnimatedShape().playAnimation("IDLE", 0.25f, AnimatedShape.EndType.LOOP, 0);
+				avatar.setCurrentAnimation("IDLE");
+				avatar.setWalking(false);
+				if (walkSound.getIsPlaying()) {
+					walkSound.stop();
+				}
+			}
+		}
 	}
 
 	/**
@@ -418,13 +405,6 @@ public class GameClient extends VariableFrameRateGame {
 	}
 
 	/**
-	 * @return the terrain
-	 */
-	public GameObject getTerrain() {
-		return terrain;
-	}
-
-	/**
 	 * @return the avatar
 	 */
 	public Avatar getAvatar() {
@@ -435,7 +415,7 @@ public class GameClient extends VariableFrameRateGame {
 	 * @return the avatar shape
 	 */
 	public ObjShape getAvatarShape() {
-		return avatarShape;
+		return avatarAnimShape;
 	}
 
 	/**
@@ -450,16 +430,28 @@ public class GameClient extends VariableFrameRateGame {
 	}
 
 	/**
-	 * Set whether the client is connected to the server
+	 * @return the terrain
 	 */
-	public void setIsClientConnected(boolean isClientConnected) {
-		this.isClientConnected = isClientConnected;
+	public GameObject getTerrain() {
+		return terrain;
 	}
 
+	public Sound getWalkSound() {
+		return walkSound;
+	}
+
+	public Sound getGoblinSound() {
+		return goblinSound;
+	}
+
+	/**
+	 * Set ear parameters
+	 */
 	public void setEarParameters() {
     	Camera camera = engine.getRenderSystem().getViewport("MAIN").getCamera();
     	audioMgr.getEar().setLocation(camera.getLocation());
 		audioMgr.getEar().setOrientation(camera.getN(), new Vector3f(0.0f, 1.0f, 0.0f));
-
     }
+
+
 }
