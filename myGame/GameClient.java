@@ -32,7 +32,7 @@ public class GameClient extends VariableFrameRateGame {
 	private Avatar avatar;
 	private GameObject terrain, tower;
 	private ObjShape terrainShape, avatarShape, towerShape, goblinShape;
-	private AnimatedShape avatarAnimShape;
+	private AnimatedShape avatarAnimShape, goblinAnimShape;
 	private TextureImage terrainTex, towerTex, goblinTex;
 	private TextureImage[] avatarTextures = new TextureImage[3];
 	private Sound walkSound, goblinSound;
@@ -69,6 +69,10 @@ public class GameClient extends VariableFrameRateGame {
 		avatarAnimShape.loadAnimation("CAST", "fireball.rka");
 		avatarAnimShape.loadAnimation("IDLE", "idle.rka");
 		avatarAnimShape.loadAnimation("WALKING", "walking.rka");
+
+		goblinAnimShape = new AnimatedShape("GoblinFixed.rkm", "GoblinFixed.rks");
+		goblinAnimShape.loadAnimation("WALKING", "GoblinRun.rka");
+		goblinAnimShape.loadAnimation("ATTACK", "GoblinAttack.rka");
 	}
 
 	@Override
@@ -309,7 +313,7 @@ public class GameClient extends VariableFrameRateGame {
 	 * Initializes the enemy manager and spawns initial enemies
 	 */
 	private void setupEnemies() {
-		enemyManager = new EnemyManager(goblinShape, goblinTex, this);
+		enemyManager = new EnemyManager(goblinAnimShape, goblinTex, this);
 		for (int i = 0; i < 5; i++) {
 			enemyManager.spawnEnemy();
 		}
