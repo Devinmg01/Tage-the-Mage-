@@ -67,6 +67,7 @@ public class EnemyManager {
     public void update(float elapsedTime) {
         for (Enemy enemy : enemies) {
             enemy.move(elapsedTime);
+            enemy.getAnimatedShape().updateAnimation();
         }
         lastSpawnTime += elapsedTime;
         if (lastSpawnTime >= (SPAWN_RATE * 100f) && enemies.size() < 50) {

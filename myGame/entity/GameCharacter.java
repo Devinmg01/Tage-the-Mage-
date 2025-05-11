@@ -7,6 +7,8 @@ import tage.TextureImage;
 import tage.physics.PhysicsObject;
 import javax.vecmath.Vector3f;
 import tage.physics.JBullet.JBulletPhysicsObject;
+import tage.shapes.AnimatedShape;
+
 
 import com.bulletphysics.dynamics.RigidBody;
 
@@ -17,6 +19,10 @@ public abstract class GameCharacter extends GameObject {
     private PhysicsObject physicsBody;
     private float physicsBodyHeight, physicsBodyRadius;
     private int health;
+
+    protected AnimatedShape animShape;
+    protected String currentAnimation;
+
 
     /**
      * Construct GameCharacter object with the specified parameters
@@ -90,4 +96,17 @@ public abstract class GameCharacter extends GameObject {
     public void setHealth(int health) {
         this.health = Math.max(health, 0);
     }
+
+    public AnimatedShape getAnimatedShape() {
+    return animShape;
+    }
+
+    public String getCurrentAnimation() {
+        return currentAnimation;
+    }
+
+    public void setCurrentAnimation(String animName) {
+        this.currentAnimation = animName;
+    }
+
 }

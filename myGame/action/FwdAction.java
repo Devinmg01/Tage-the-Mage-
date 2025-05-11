@@ -55,10 +55,16 @@ public class FwdAction extends AbstractInputAction {
 
         // Only plays if not already playing WALKING
         if (!"WALKING".equals(avatar.getCurrentAnimation())) {
-            avatar.getAnimatedShape().playAnimation("WALKING", 0.5f, AnimatedShape.EndType.LOOP, 0);
+            avatar.getAnimatedShape().playAnimation("WALKING", 0.4f, AnimatedShape.EndType.LOOP, 0);
             avatar.setCurrentAnimation("WALKING");
         }
+
+        if (walkSound != null && !walkSound.getIsPlaying()) {
+            walkSound.setLocation(avatar.getWorldLocation());
+            walkSound.play();
+        }
     }
+    
 
     @Override
     public void performAction(float elapsTime, Event e) {

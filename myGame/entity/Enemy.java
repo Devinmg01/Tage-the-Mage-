@@ -9,6 +9,8 @@ import tage.ObjShape;
 import tage.TextureImage;
 import java.util.UUID;
 import tage.audio.*;
+import tage.shapes.AnimatedShape;
+
 
 
 public class Enemy extends GameCharacter {
@@ -46,6 +48,31 @@ public class Enemy extends GameCharacter {
             !checkCollision(game.getAvatar())) {
             fwdAction.moveForward(elapsedTime, DEFAULT_SPEED);
         }
+
+        if (!"WALKING".equals(getCurrentAnimation())) {
+            getAnimatedShape().playAnimation("WALKING", 0.025f, AnimatedShape.EndType.LOOP, 0);
+            setCurrentAnimation("WALKING");
+        }
+    }
+    /**
+     * Returns the AnimatedShape by casting the shape
+     */
+    public AnimatedShape getAnimatedShape() {
+        return (AnimatedShape) this.getShape();
+    }
+
+    /**
+     * Returns the current animation name
+     */
+    public String getCurrentAnimation() {
+        return currentAnimation;
+    }
+
+    /**
+     * Sets the current animation name
+     */
+    public void setCurrentAnimation(String animName) {
+        this.currentAnimation = animName;
     }
 
     /**
