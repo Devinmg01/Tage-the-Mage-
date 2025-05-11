@@ -106,10 +106,10 @@ public class GameClient extends VariableFrameRateGame {
 
 
 		AudioResource musicRes = audioMgr.createAudioResource("BackgroundMusic.wav", AudioResourceType.AUDIO_SAMPLE);
-		backgroundMusic = new Sound(musicRes, SoundType.SOUND_MUSIC,5, true); // looping music
+		backgroundMusic = new Sound(musicRes, SoundType.SOUND_MUSIC,5, true); 
 		backgroundMusic.initialize(audioMgr);
 
-		// Optional: set spatial properties (not needed for 2D music, but safe to include)
+		
 		
 
 	}
