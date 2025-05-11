@@ -35,7 +35,7 @@ public class GameClient extends VariableFrameRateGame {
 	private AnimatedShape avatarAnimShape, goblinAnimShape;
 	private TextureImage terrainTex, towerTex, goblinTex;
 	private TextureImage[] avatarTextures = new TextureImage[3];
-	private Sound walkSound, goblinSound;
+	private Sound walkSound, goblinSound, backgroundMusic;
 	private Vector3f hud1Color;
 
 	private double lastFrameTime, currFrameTime, elapseFrameTime;
@@ -103,6 +103,15 @@ public class GameClient extends VariableFrameRateGame {
     	goblinSound.setMinDistance(5.0f);
     	goblinSound.setRollOff(5.0f);
 		//goblinSound.play();
+
+
+		AudioResource musicRes = audioMgr.createAudioResource("BackgroundMusic.wav", AudioResourceType.AUDIO_SAMPLE);
+		backgroundMusic = new Sound(musicRes, SoundType.SOUND_MUSIC,5, true); // looping music
+		backgroundMusic.initialize(audioMgr);
+
+		// Optional: set spatial properties (not needed for 2D music, but safe to include)
+		
+
 	}
 
 	@Override
@@ -177,6 +186,9 @@ public class GameClient extends VariableFrameRateGame {
 		lastFrameTime = System.currentTimeMillis();
 		currFrameTime = System.currentTimeMillis();
 		elapseFrameTime = 0f;
+
+		backgroundMusic.play();
+
 	}
 
 	@Override
