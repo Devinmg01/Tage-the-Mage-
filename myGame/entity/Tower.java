@@ -33,7 +33,7 @@ public class Tower extends GameObject {
 
             if (damageLock == 0) {
                 for (Enemy enemy : enemyManager.getEnemies()) {
-                    if (enemy.getLocalLocation().distance(getLocalLocation()) <= 6f) {
+                    if (enemy.getLocalLocation().distance(getLocalLocation()) <= 10f) {
                         takeDamage();
                         break;
                     }

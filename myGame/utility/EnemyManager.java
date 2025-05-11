@@ -7,6 +7,7 @@ import tage.ObjShape;
 import tage.TextureImage;
 import org.joml.Vector3f;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Random;
 import java.util.UUID;
 import tage.audio.*;
@@ -76,13 +77,21 @@ public class EnemyManager {
     }
 
     public void update(float elapsedTime) {
-        for (Enemy enemy : enemies) {
+        Iterator<Enemy> iterator = enemies.iterator();
+        while (iterator.hasNext()) {
+            Enemy enemy = iterator.next();
             enemy.move(elapsedTime);
             enemy.getAnimatedShape().updateAnimation();
-           if (enemy.checkCollision(game.getAvatar())) {
-               game.getEnemyManager().removeEnemy(enemy.getId());
-           }
+
+            if (enemy.isDead()) {
+                iterator.remove();
+                game.getEngine().getSceneGraph().removeGameObject(enemy);
+                if (game.getClientManager() != null) {
+                    game.getClientManager().sendEnemyRemove(enemy.getId());
+                }
+            }
         }
+
         lastSpawnTime += elapsedTime;
         if (lastSpawnTime >= (SPAWN_RATE * 100f) && enemies.size() < 50) {
             spawnEnemy();

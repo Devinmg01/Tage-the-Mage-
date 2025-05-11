@@ -20,7 +20,7 @@ public class Enemy extends GameCharacter {
     private UUID id;
     private Vector3f targetLoc;
     private FwdAction fwdAction;
-    private int avatarDmgTick, towerDmgTick;
+    private boolean isDead = false;
 
 
     /**
@@ -33,12 +33,18 @@ public class Enemy extends GameCharacter {
         this.game = game;
         this.targetLoc = targetLoc;
         this.fwdAction = new FwdAction(this, game, false);
-        avatarDmgTick = 0;
-        towerDmgTick = 0;
         setLocalLocation(spawnLoc);
         setLocalScale(new Matrix4f().scaling(0.25f));
         initPhysics(1f, 0.5f, 2f);
         lookAt(targetLoc);
+    }
+
+    public void markAsDead() {
+        isDead = true;
+    }
+
+    public boolean isDead() {
+        return isDead;
     }
 
     /**
@@ -48,11 +54,11 @@ public class Enemy extends GameCharacter {
 
         if (getLocalLocation().distance(targetLoc) >= 5f && !checkCollision(game.getAvatar())) {
             fwdAction.moveForward(elapsedTime, DEFAULT_SPEED);
-            avatarDmgTick = 0;
         }
 
         if (checkCollision(game.getAvatar())) {
             game.getAvatar().takeDamage();
+            markAsDead();
         }
 
         if (!"WALKING".equals(getCurrentAnimation())) {
