@@ -71,6 +71,7 @@ public class GhostManager {
      */
     public void removeGhost(UUID id) {
         GhostAvatar ghost = ghosts.remove(id);
+        System.out.println("Removed ghost with ID " + id);
         if (ghost != null) {
             game.getEngine().getSceneGraph().removeGameObject(ghost);
         }

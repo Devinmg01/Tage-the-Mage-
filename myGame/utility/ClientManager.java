@@ -59,7 +59,7 @@ public class ClientManager extends GameConnectionClient {
                     break;
                 case "wsds": // Message Format: wsds,remoteId
                     remoteId = UUID.fromString(msgTokens[1]);
-                    sendDetailsForMessage(remoteId, 0, game.getAvatar().getWorldLocation());
+                    sendDetailsForMessage(remoteId, game.getSkinIndex(), game.getAvatar().getWorldLocation());
                     break;
                 case "move": // Message Format: move,remoteID,x,y,z
                     remoteId = UUID.fromString(msgTokens[1]);

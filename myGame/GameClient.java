@@ -290,7 +290,7 @@ public class GameClient extends VariableFrameRateGame {
 		ElevateOrbitAction lowerOrbit = new ElevateOrbitAction(cam, true);
 		RotateOrbitAction rotateRightOrbit = new RotateOrbitAction(cam, false);
 		RotateOrbitAction rotateLeftOrbit = new RotateOrbitAction(cam, true);
-		ExitGameAction exitGame = new ExitGameAction();
+		ExitGameAction exitGame = new ExitGameAction(this);
 		ToggleSpotlightsAction toggleSpotlights = new ToggleSpotlightsAction(this);
 
 		// Keyboard bindings
@@ -366,7 +366,7 @@ public class GameClient extends VariableFrameRateGame {
 		} else {
 			System.out.println("Sending join message to server host");
 			clientManager.sendJoinMessage();
-			clientManager.sendCreateMessage(0, avatar.getWorldLocation());
+			clientManager.sendCreateMessage(skinIndex, avatar.getWorldLocation());
 		}
 	}
 
@@ -581,6 +581,13 @@ public class GameClient extends VariableFrameRateGame {
 	 */
 	public Light getHealingLight() {
 		return healingLight;
+	}
+
+	/**
+	 * @return skin index
+	 */
+	public int getSkinIndex() {
+		return skinIndex;
 	}
 
 }
