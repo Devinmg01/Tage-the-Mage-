@@ -54,10 +54,6 @@ public class Avatar extends GameCharacter {
     public void takeDamage() {
         int health = getHealth();
 
-        if (health == 1) {
-            game.endGame();
-        }
-
         updateSpotlightColor(health);
 
         setHealth(health - 1);
