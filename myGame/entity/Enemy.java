@@ -39,6 +39,15 @@ public class Enemy extends GameCharacter {
         setLocalScale(new Matrix4f().scaling(0.25f));
         initPhysics(1f, 0.5f, 2f);
         lookAt(targetLoc);
+
+        GameObject footCube = new GameObject(this, game.getCubeShape(), null);
+        footCube.getRenderStates().hasLighting(false);
+
+        footCube.setLocalScale(new Matrix4f().scaling(3f)); // sizee cube
+        footCube.setLocalTranslation(new Matrix4f().translation(0f, -0.55f, 0f)); 
+        footCube.getRenderStates().setColor(new Vector3f(1, 0, 0)); // red
+
+
     }
 
     /**

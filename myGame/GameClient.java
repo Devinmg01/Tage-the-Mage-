@@ -47,6 +47,8 @@ public class GameClient extends VariableFrameRateGame {
 	private final String serverAddress;
 	private final int serverPort;
 	private int skinIndex = 0; 
+	private ObjShape cubeShape;
+
 
 
 	public GameClient(String serverAddress, int serverPort, int skinIndex) {
@@ -98,6 +100,9 @@ public class GameClient extends VariableFrameRateGame {
 		goblinAnimShape = new AnimatedShape("GoblinFixed.rkm", "GoblinFixed.rks");
 		goblinAnimShape.loadAnimation("WALKING", "GoblinRun.rka");
 		goblinAnimShape.loadAnimation("ATTACK", "GoblinAttack.rka");
+
+		cubeShape = new Cube(); 
+
 	}
 
 	@Override
@@ -582,5 +587,9 @@ public class GameClient extends VariableFrameRateGame {
 	public Light getHealingLight() {
 		return healingLight;
 	}
+	public ObjShape getCubeShape() {
+		return cubeShape;
+	}
+
 
 }
