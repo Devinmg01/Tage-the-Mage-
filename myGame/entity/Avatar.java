@@ -10,18 +10,20 @@ import tage.shapes.AnimatedShape;
 public class Avatar extends GameCharacter {
 
     // Class Variables
-    private static final int DEFAULT_HEALTH = 10;
+    private GameClient game;
     private static final long idleDelay = 500; // 0.5 seconds
     private int score = 0;
     private boolean walking = false;
     private long lastInputTime = System.currentTimeMillis();
     private String currentAnimation = "";
+    private int healTick = 0;
 
     /**
      * Construct GameAvatar object with the specified parameters
      */
     public Avatar(GameObject object, ObjShape shape, TextureImage texture, GameClient game) {
-        super(object, shape, texture, game, DEFAULT_HEALTH);
+        super(object, shape, texture, game, 10);
+        this.game = game;
         setLocalScale(new Matrix4f().scaling(0.35f));
         initPhysics(1f, 0.5f, 2f);
     }
@@ -31,6 +33,53 @@ public class Avatar extends GameCharacter {
      */
     public int getScore() {
         return score;
+    }
+
+    public void updateSpotlightColor(int health) {
+        if (health >= 7) {
+            game.getAvatarLight().setDiffuse(0f, 1f, 0f);
+        }
+        else if (health >= 4) {
+            game.getAvatarLight().setDiffuse(1f, 0.5f, 0f);
+        }
+        else {
+            game.getAvatarLight().setDiffuse(1f, 0f, 0f);
+        }
+
+    }
+
+    /**
+     * Make the avatar take damage
+     */
+    public void takeDamage() {
+        int health = getHealth();
+
+        if (health == 1) {
+            game.endGame();
+        }
+
+        updateSpotlightColor(health);
+
+        setHealth(health - 1);
+    }
+
+    /**
+     * Heal the avatar
+     */
+    public void heal() {
+        int health = getHealth();
+
+        if (healTick == 0) {
+            if (health < 10) {
+                setHealth(health + 1);
+            }
+        }
+        healTick++;
+        if (healTick == 25) {
+            healTick = 0;
+        }
+
+        updateSpotlightColor(health);
     }
 
     /**

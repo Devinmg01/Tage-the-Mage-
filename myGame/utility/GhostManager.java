@@ -2,6 +2,8 @@ package myGame.utility;
 
 import myGame.GameClient;
 import myGame.entity.GhostAvatar;
+
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.UUID;
 import tage.ObjShape;
@@ -55,6 +57,13 @@ public class GhostManager {
             System.out.println("Ghost with ID " + id + " not found.");
             return null;
         }
+    }
+
+    /**
+     * @return an array list of all the ghosts
+     */
+    public ArrayList<GhostAvatar> getAllGhosts() {
+        return new ArrayList<>(ghosts.values());
     }
 
     /**

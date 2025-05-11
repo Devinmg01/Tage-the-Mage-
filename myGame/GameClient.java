@@ -29,14 +29,19 @@ public class GameClient extends VariableFrameRateGame {
 	private PhysicsEngine physicsEngine;
 
 	private CameraOrbit3D cam;
+	private Camera miniMap;
+	private Viewport main, mini;
+	private Light avatarLight, towerLight, healingLight;
 	private Avatar avatar;
-	private GameObject terrain, tower;
+	private Tower tower;
+	private GameObject terrain;
 	private ObjShape terrainShape, avatarShape, towerShape, goblinShape;
 	private AnimatedShape avatarAnimShape, goblinAnimShape;
 	private TextureImage terrainTex, towerTex, goblinTex;
+	private Vector3f hud1Color, hud2Color;
+	private boolean isGameOver = false;
 	private TextureImage[] avatarTextures = new TextureImage[4];
 	private Sound walkSound, goblinSound, backgroundMusic;
-	private Vector3f hud1Color;
 	
 	private double lastFrameTime, currFrameTime, elapseFrameTime;
 	private final String serverAddress;
@@ -59,14 +64,31 @@ public class GameClient extends VariableFrameRateGame {
 	}
 
 	@Override
+	public void createViewports() {
+		(engine.getRenderSystem()).addViewport("MAIN",0,0,1,1);
+		(engine.getRenderSystem()).addViewport("MINI",0.8f,0,0.2f,0.3f);
+
+		main = (engine.getRenderSystem()).getViewport("MAIN");
+		mini = (engine.getRenderSystem()).getViewport("MINI");
+
+		mini.setHasBorder(true);
+		mini.setBorderWidth(3);
+		mini.setBorderColor(1,1,1);
+
+		cam = new CameraOrbit3D(main.getCamera(), avatar);
+		miniMap = mini.getCamera();
+		miniMap.setLocation(new Vector3f(0, 100, 0));
+		miniMap.setN(new Vector3f(0, -1, 0));
+		miniMap.setV(new Vector3f(0, 0, 1));
+		miniMap.setU(new Vector3f(-1, 0, 0));
+	}
+
+	@Override
 	public void loadShapes() {
         terrainShape = new TerrainPlane();
         avatarShape = new ImportedModel("wizard.obj");
         towerShape = new ImportedModel("tower.obj");
         goblinShape = new ImportedModel("goblin.obj");
-
-
-
 
 		avatarAnimShape = new AnimatedShape("wizardmeshy.rkm", "wizardskelly.rks");
 		avatarAnimShape.loadAnimation("CAST", "fireball.rka");
@@ -126,6 +148,7 @@ public class GameClient extends VariableFrameRateGame {
 		terrain = new GameObject(GameObject.root(), terrainShape, terrainTex);
 		terrain.setLocalScale(new Matrix4f().scaling(300f, 40f, 300f));
 		terrain.setLocalTranslation(new Matrix4f().translation(0f, 0f, 0f));
+		terrain.getRenderStates().hasLighting(true);
 		terrain.getRenderStates().setTiling(2);
 		terrain.getRenderStates().setTileFactor(75);
 		terrain.setIsTerrain(true);
@@ -140,24 +163,55 @@ public class GameClient extends VariableFrameRateGame {
 		avatar.setLocalRotation(new Matrix4f().rotateY((float)Math.toRadians(180)));
 
 		// Tower
-		tower = new GameObject(GameObject.root(), towerShape, towerTex);
-		tower.getRenderStates().hasLighting(true);
-		tower.setLocalScale(new Matrix4f().scaling(8f));
-		tower.setLocalTranslation(new Matrix4f().translation(0f, 0f, 0f));
+		tower = new Tower(GameObject.root(), towerShape, towerTex, this);
+		tower.setLocalTranslation(new Matrix4f().translation(100f, 0f, 0f));
+		tower.setLocalScale(new Matrix4f().scaling(4f));;
 
 		// Hud Color
 		hud1Color = new Vector3f(1, 0, 0);
+		hud2Color = new Vector3f(0, 0, 1);
 	}
 
 	@Override
 	public void initializeLights() {
 		Light.setGlobalAmbient(0.5f, 0.5f, 0.5f);
+
 		Light ambientLight = new Light();
-		ambientLight.setDiffuse(0.0f, 0.0f, 0.0f);
-		ambientLight.setSpecular(0.0f, 0.0f, 0.0f);
+		avatarLight = new Light();
+		towerLight = new Light();
+		healingLight = new Light();
+
+		avatarLight.setType(Light.LightType.SPOTLIGHT);
+		towerLight.setType(Light.LightType.SPOTLIGHT);
+		healingLight.setType(Light.LightType.SPOTLIGHT);
+
 		ambientLight.setLocation(new Vector3f(5.0f, 4.0f, 2.0f));
+		avatarLight.setLocation(new Vector3f(10.0f, 2.0f, 0.0f));
+		towerLight.setLocation(new Vector3f(0.0f, 12.0f, 0.0f));
+		healingLight.setLocation(new Vector3f(-100.0f, 10.0f, 0.0f));
+
+		avatarLight.setDirection(new Vector3f(0, -1, 0));
+		towerLight.setDirection(new Vector3f(0, -1, 0));
+		healingLight.setDirection(new Vector3f(0, -1, 0));
+
+		avatarLight.setAmbient(0.0f, 0.0f, 0.0f);
+		towerLight.setAmbient(0.0f, 0.0f, 0.0f);
+		healingLight.setAmbient(0.0f, 0.0f, 0.0f);
+
+		ambientLight.setDiffuse(0.0f, 0.0f, 0.0f);
+		avatarLight.setDiffuse(0f, 1f, 0f);
+		towerLight.setDiffuse(0f, 1f, 0f);
+		healingLight.setDiffuse(1f, 0.5f, 1f);
+
+		ambientLight.setSpecular(0.0f, 0.0f, 0.0f);
+		avatarLight.setSpecular(0.0f, 0.0f, 0.0f);
+		towerLight.setSpecular(0.0f, 0.0f, 0.0f);
+		healingLight.setSpecular(0.0f, 0.0f, 0.0f);
 
 		engine.getSceneGraph().addLight(ambientLight);
+		engine.getSceneGraph().addLight(avatarLight);
+		engine.getSceneGraph().addLight(towerLight);
+		engine.getSceneGraph().addLight(healingLight);
 	}
 
 	@Override
@@ -171,16 +225,9 @@ public class GameClient extends VariableFrameRateGame {
 	@Override
 	public void initializeGame() {
 		(engine.getRenderSystem()).setWindowDimensions(1900, 1000);
-		cam = new CameraOrbit3D((engine.getRenderSystem()).getViewport("MAIN").getCamera(), avatar);
-
+		im = engine.getInputManager();
 		physicsEngine = engine.getSceneGraph().getPhysicsEngine();
-		physicsEngine.setGravity(new float[]{0f, -9.8f, 0f});
 		//engine.enablePhysicsWorldRender();
-
-		double[] towerTransform = toDoubleArray(tower.getLocalTranslation().get(new float[16]));
-		float[] size = new float[]{ 4f, 20f, 4f };
-		PhysicsObject towerBody = engine.getSceneGraph().addPhysicsBox(0f, towerTransform, size);
-		tower.setPhysicsObject(towerBody);
 
 		// Initialize Network Client Manager
 		setupNetworking();
@@ -231,7 +278,6 @@ public class GameClient extends VariableFrameRateGame {
 	 * Maps key bindings to actions
 	 */
 	private void mapKeyBindings() {
-		im = engine.getInputManager();
 
 		// Actions
 		FwdAction moveForward = new FwdAction(avatar, this, true);
@@ -245,6 +291,7 @@ public class GameClient extends VariableFrameRateGame {
 		RotateOrbitAction rotateRightOrbit = new RotateOrbitAction(cam, false);
 		RotateOrbitAction rotateLeftOrbit = new RotateOrbitAction(cam, true);
 		ExitGameAction exitGame = new ExitGameAction();
+		ToggleSpotlightsAction toggleSpotlights = new ToggleSpotlightsAction(this);
 
 		// Keyboard bindings
 		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.W, moveForward,
@@ -268,6 +315,8 @@ public class GameClient extends VariableFrameRateGame {
 		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.RIGHT, rotateRightOrbit,
 				InputManager.INPUT_ACTION_TYPE.REPEAT_WHILE_DOWN);
 		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.ESCAPE, exitGame,
+				InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
+		im.associateActionWithAllKeyboards(net.java.games.input.Component.Identifier.Key.L, toggleSpotlights,
 				InputManager.INPUT_ACTION_TYPE.ON_PRESS_ONLY);
 
 		// Gamepad bindings
@@ -346,10 +395,19 @@ public class GameClient extends VariableFrameRateGame {
 	private void updateStates(float elapseFrameTime) {
 		cam.update();
 		enemyManager.update(elapseFrameTime);
+		avatarLight.setLocation(avatar.getWorldLocation().add(0, 2, 0));
+
+		if (avatar.getLocalLocation().distance(new Vector3f(-100, 0, 0)) < 5.5f) {
+			avatar.heal();
+			healingLight.setDiffuse(0f, 0.5f, 0f);
+		}
+		else {
+			healingLight.setDiffuse(1f, 0.5f, 0f);
+		}
 
 		if ((System.currentTimeMillis() - avatar.getLastInputTime()) > 500) {
 			if (!"IDLE".equals(avatar.getCurrentAnimation())) {
-				avatar.getAnimatedShape().playAnimation("IDLE", 0.25f, AnimatedShape.EndType.LOOP, 0);
+				avatar.getAnimatedShape().playAnimation("IDLE", 0.5f, AnimatedShape.EndType.LOOP, 0);
 				avatar.setCurrentAnimation("IDLE");
 				avatar.setWalking(false);
 				if (walkSound.getIsPlaying()) {
@@ -364,11 +422,16 @@ public class GameClient extends VariableFrameRateGame {
 	 */
 	private void updateHUD() {
 		Viewport main = (engine.getRenderSystem()).getViewport("MAIN");
+		float width = main.getActualWidth();
+		float height = main.getActualHeight();
 
-		String hud1Str = "Score: " + avatar.getScore();
+		String hud1Str = "Avatar Health: " + avatar.getHealth();
+		String hud2Str = "Tower Health: " + tower.getHealth();
 
 		(engine.getHUDmanager()).setHUD1(hud1Str, hud1Color,
-				(int) ((main.getActualWidth() - (main.getActualWidth() / 2)) - (hud1Str.length() * 8 / 2)), 15);
+				(int) ((width - (width / 2)) - ((float) (hud1Str.length() * 8) / 2)), 15);
+		(engine.getHUDmanager()).setHUD2(hud2Str, hud2Color,
+				(int) ((width - (width / 2)) - ((float) (hud2Str.length() * 8) / 2)), (int) (height - 30));
 	}
 
 	/**
@@ -395,6 +458,13 @@ public class GameClient extends VariableFrameRateGame {
 		{ ret[i] = (double)arr[i];
 		}
 		return ret;
+	}
+
+	/**
+	 * End the game
+	 */
+	public void endGame() {
+		isGameOver = false;
 	}
 
 	/*
@@ -430,6 +500,13 @@ public class GameClient extends VariableFrameRateGame {
 	}
 
 	/**
+	 * @return the tower
+	 */
+	public Tower getTower() {
+		return tower;
+	}
+
+	/**
 	 * @return the avatar
 	 */
 	public Avatar getAvatar() {
@@ -461,10 +538,16 @@ public class GameClient extends VariableFrameRateGame {
 		return terrain;
 	}
 
+	/**
+	 * @return the walking sound
+	 */
 	public Sound getWalkSound() {
 		return walkSound;
 	}
 
+	/**
+	 * @return the goblin sound
+	 */
 	public Sound getGoblinSound() {
 		return goblinSound;
 	}
@@ -478,5 +561,25 @@ public class GameClient extends VariableFrameRateGame {
 		audioMgr.getEar().setOrientation(camera.getN(), new Vector3f(0.0f, 1.0f, 0.0f));
     }
 
+	/**
+	 * @return the avatar light
+	 */
+	public Light getAvatarLight() {
+		return avatarLight;
+	}
+
+	/**
+	 * @return the tower light
+	 */
+	public Light getTowerLight() {
+		return towerLight;
+	}
+
+	/**
+	 * @return the healing light
+	 */
+	public Light getHealingLight() {
+		return healingLight;
+	}
 
 }

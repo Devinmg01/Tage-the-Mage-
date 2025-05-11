@@ -1,7 +1,6 @@
 package myGame.action;
 
 import myGame.GameClient;
-import myGame.entity.Enemy;
 import myGame.utility.ClientManager;
 import myGame.entity.Avatar;
 import myGame.entity.GameCharacter;
@@ -55,7 +54,7 @@ public class FwdAction extends AbstractInputAction {
 
         // Only plays if not already playing WALKING
         if (!"WALKING".equals(avatar.getCurrentAnimation())) {
-            avatar.getAnimatedShape().playAnimation("WALKING", 0.4f, AnimatedShape.EndType.LOOP, 0);
+            avatar.getAnimatedShape().playAnimation("WALKING", 0.5f, AnimatedShape.EndType.LOOP, 0);
             avatar.setCurrentAnimation("WALKING");
         }
 

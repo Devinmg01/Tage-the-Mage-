@@ -11,8 +11,6 @@ import java.util.UUID;
 import tage.audio.*;
 import tage.shapes.AnimatedShape;
 
-
-
 public class Enemy extends GameCharacter {
 
     // Class Variables
@@ -22,6 +20,8 @@ public class Enemy extends GameCharacter {
     private UUID id;
     private Vector3f targetLoc;
     private FwdAction fwdAction;
+    private int avatarDmgTick, towerDmgTick;
+
 
     /**
      * Construct Enemy object with the specified parameters
@@ -33,6 +33,8 @@ public class Enemy extends GameCharacter {
         this.game = game;
         this.targetLoc = targetLoc;
         this.fwdAction = new FwdAction(this, game, false);
+        avatarDmgTick = 0;
+        towerDmgTick = 0;
         setLocalLocation(spawnLoc);
         setLocalScale(new Matrix4f().scaling(0.25f));
         initPhysics(1f, 0.5f, 2f);
@@ -44,13 +46,24 @@ public class Enemy extends GameCharacter {
      */
     public void move(float elapsedTime) {
 
-        if (getLocalLocation().distance(targetLoc) >= 5f &&
-            !checkCollision(game.getAvatar())) {
+        if (getLocalLocation().distance(targetLoc) >= 5f && !checkCollision(game.getAvatar())) {
             fwdAction.moveForward(elapsedTime, DEFAULT_SPEED);
+            avatarDmgTick = 0;
+        }
+
+        if (checkCollision(game.getAvatar())) {
+            if (avatarDmgTick == 0) {
+                game.getAvatar().takeDamage();
+            }
+            avatarDmgTick++;
+            if (avatarDmgTick == 50) {
+                avatarDmgTick = 0;
+                System.out.println("Avatar hit");
+            }
         }
 
         if (!"WALKING".equals(getCurrentAnimation())) {
-            getAnimatedShape().playAnimation("WALKING", 0.025f, AnimatedShape.EndType.LOOP, 0);
+            getAnimatedShape().playAnimation("WALKING", 0.15f, AnimatedShape.EndType.LOOP, 0);
             setCurrentAnimation("WALKING");
         }
     }
