@@ -38,23 +38,26 @@ public class GameClient extends VariableFrameRateGame {
 	private ObjShape terrainShape, avatarShape, towerShape, goblinShape;
 	private AnimatedShape avatarAnimShape, goblinAnimShape;
 	private TextureImage terrainTex, towerTex, goblinTex;
-	private TextureImage[] avatarTextures = new TextureImage[3];
-	private Sound walkSound, goblinSound;
 	private Vector3f hud1Color, hud2Color;
 	private boolean isGameOver = false;
-
+	private TextureImage[] avatarTextures = new TextureImage[4];
+	private Sound walkSound, goblinSound, backgroundMusic;
+	
 	private double lastFrameTime, currFrameTime, elapseFrameTime;
 	private final String serverAddress;
 	private final int serverPort;
+	private int skinIndex = 0; 
 
-	public GameClient(String serverAddress, int serverPort) {
+
+	public GameClient(String serverAddress, int serverPort, int skinIndex) {
 		super();
 		this.serverAddress = serverAddress;
 		this.serverPort = serverPort;
+		this.skinIndex = skinIndex;
 	}
 
 	public static void main(String[] args) {
-		GameClient game = new GameClient(args[0], Integer.parseInt(args[1]));
+		GameClient game = new GameClient(args[0], Integer.parseInt(args[1]), Integer.parseInt(args[2]));
 		engine = new Engine(game);
 		game.initializeSystem();
 		game.game_loop();
@@ -100,7 +103,10 @@ public class GameClient extends VariableFrameRateGame {
 	@Override
 	public void loadTextures() {
 		terrainTex = new TextureImage("../terrain/grass.png");
-		avatarTextures[0] = new TextureImage("WizardUV1.png");
+		avatarTextures[0] = new TextureImage("WizardUV1.png"); // Default
+		avatarTextures[1] = new TextureImage("WizardUV2.png"); // Blue
+		avatarTextures[2] = new TextureImage("WizardUV3.png"); // Red
+		avatarTextures[3] = new TextureImage("WizardUV4.png"); // Green
 		towerTex = new TextureImage("wizardTowerUV.png");
 		goblinTex = new TextureImage("goblin.png");
 	}
@@ -125,6 +131,15 @@ public class GameClient extends VariableFrameRateGame {
     	goblinSound.setMinDistance(5.0f);
     	goblinSound.setRollOff(5.0f);
 		//goblinSound.play();
+
+
+		AudioResource musicRes = audioMgr.createAudioResource("BackgroundMusic.wav", AudioResourceType.AUDIO_SAMPLE);
+		backgroundMusic = new Sound(musicRes, SoundType.SOUND_MUSIC,5, true); 
+		backgroundMusic.initialize(audioMgr);
+
+		
+		
+
 	}
 
 	@Override
@@ -140,7 +155,10 @@ public class GameClient extends VariableFrameRateGame {
 		terrain.setHeightMap(new TextureImage("../terrain/Heightmap.png"));
 
 		// Avatar
-		avatar = new Avatar(GameObject.root(), avatarAnimShape, avatarTextures[0], this);
+		if (skinIndex < 0 || skinIndex > 3) {
+			skinIndex = 0;
+		}
+		avatar = new Avatar(GameObject.root(), avatarAnimShape, avatarTextures[skinIndex], this);
 		avatar.setLocalTranslation(new Matrix4f().translation(10f, 0f, 0f));
 		avatar.setLocalRotation(new Matrix4f().rotateY((float)Math.toRadians(180)));
 
@@ -224,6 +242,9 @@ public class GameClient extends VariableFrameRateGame {
 		lastFrameTime = System.currentTimeMillis();
 		currFrameTime = System.currentTimeMillis();
 		elapseFrameTime = 0f;
+
+		backgroundMusic.play();
+
 	}
 
 	@Override
