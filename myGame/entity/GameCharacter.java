@@ -2,6 +2,7 @@ package myGame.entity;
 
 import myGame.GameClient;
 import tage.GameObject;
+import tage.Light;
 import tage.ObjShape;
 import tage.TextureImage;
 import tage.physics.PhysicsObject;
@@ -22,7 +23,6 @@ public abstract class GameCharacter extends GameObject {
 
     protected AnimatedShape animShape;
     protected String currentAnimation;
-
 
     /**
      * Construct GameCharacter object with the specified parameters
@@ -97,14 +97,23 @@ public abstract class GameCharacter extends GameObject {
         this.health = Math.max(health, 0);
     }
 
+    /**
+     * @return game object animated shape
+     */
     public AnimatedShape getAnimatedShape() {
-    return animShape;
+        return animShape;
     }
 
+    /**
+     * @return current animation
+     */
     public String getCurrentAnimation() {
         return currentAnimation;
     }
 
+    /**
+     * Set current animation
+     */
     public void setCurrentAnimation(String animName) {
         this.currentAnimation = animName;
     }
