@@ -188,7 +188,7 @@ public class GameClient extends VariableFrameRateGame {
 		ambientLight.setLocation(new Vector3f(5.0f, 4.0f, 2.0f));
 		avatarLight.setLocation(new Vector3f(10.0f, 2.0f, 0.0f));
 		towerLight.setLocation(new Vector3f(0.0f, 12.0f, 0.0f));
-		healingLight.setLocation(new Vector3f(-100.0f, 10.0f, 0.0f));
+		healingLight.setLocation(new Vector3f(-50.0f, 10.0f, 0.0f));
 
 		avatarLight.setDirection(new Vector3f(0, -1, 0));
 		towerLight.setDirection(new Vector3f(0, -1, 0));
@@ -396,8 +396,9 @@ public class GameClient extends VariableFrameRateGame {
 		cam.update();
 		enemyManager.update(elapseFrameTime);
 		avatarLight.setLocation(avatar.getWorldLocation().add(0, 2, 0));
+		tower.update();
 
-		if (avatar.getLocalLocation().distance(new Vector3f(-100, 0, 0)) < 5.5f) {
+		if (avatar.getLocalLocation().distance(new Vector3f(-50, 0, 0)) < 5.5f) {
 			avatar.heal();
 			healingLight.setDiffuse(0f, 0.5f, 0f);
 		}

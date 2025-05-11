@@ -28,13 +28,17 @@ public class Tower extends GameObject {
      */
     public void update() {
         if (damageLock == 0) {
-//            EnemyManager enemyManager = game.getEnemyManager();
-//            for (Enemy enemy : enemyManager.getEnemies()) {
-//                if (enemy.checkCollision(this)) {
-//                    takeDamage();
-//                    break;
-//                }
-//            }
+            EnemyManager enemyManager = game.getEnemyManager();
+            if (enemyManager == null) return;
+
+            if (damageLock == 0) {
+                for (Enemy enemy : enemyManager.getEnemies()) {
+                    if (enemy.getLocalLocation().distance(getLocalLocation()) <= 6f) {
+                        takeDamage();
+                        break;
+                    }
+                }
+            }
         }
         damageLock++;
         if (damageLock == 100) {
