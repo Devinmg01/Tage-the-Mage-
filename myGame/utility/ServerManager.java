@@ -75,6 +75,10 @@ public class ServerManager extends GameConnectionServer<UUID> {
                     position = new String[] { msgTokens[3], msgTokens[4], msgTokens[5] };
                     sendSpawnEnemyMessage(clientId, enemyId, position);
                     break;
+                case "enemy_dies": // Format: enemy_dies,enemyId
+                    enemyId = UUID.fromString(msgTokens[1]);
+                    sendEnemyDiesMessage(enemyId);
+                    break;
                 case "enemy_spawn_id": // Format: enemy_spawn_id,remoteID,enemyId,x,y,z
                     remoteId = UUID.fromString(msgTokens[1]);
                     enemyId = UUID.fromString(msgTokens[2]);
@@ -207,6 +211,19 @@ public class ServerManager extends GameConnectionServer<UUID> {
             message += "," + position[0];
             message += "," + position[1];
             message += "," + position[2];
+            forwardPacketToAll(message, clientId);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Informs the clients that an enemy has died
+     * Message Format: enemy_dies,enemyID
+     */
+    public void sendEnemyDiesMessage(UUID enemyId) {
+        try {
+            String message = new String("enemy_dies," + enemyId.toString());
             forwardPacketToAll(message, clientId);
         } catch (IOException e) {
             e.printStackTrace();

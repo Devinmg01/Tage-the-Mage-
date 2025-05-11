@@ -77,6 +77,10 @@ public class ClientManager extends GameConnectionClient {
                             Float.parseFloat(msgTokens[4]));
                     game.getEnemyManager().spawnEnemy(enemyId, position);
                     break;
+                case "enemy_dies": // Format: enemy_dies,enemyID
+                    enemyId = UUID.fromString(msgTokens[1]);
+                    game.getEnemyManager().removeEnemy(enemyId);
+                    break;
                 case "all_enemies": // Format: all_enemies,remoteID
                     remoteId = UUID.fromString(msgTokens[1]);
                     sendAllEnemies(remoteId);
@@ -175,6 +179,20 @@ public class ClientManager extends GameConnectionClient {
                 message += "," + spawnLoc.x;
                 message += "," + spawnLoc.y;
                 message += "," + spawnLoc.z;
+            sendPacket(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Message to the server informing it that an enemy has spawned
+     * Message Format: enemy_dies,clientID,enemyID
+     */
+    public void sendEnemyRemove(UUID enemyId) {
+        try {
+            String message = String.format("enemy_dies," + clientId.toString());
+            message += "," + enemyId.toString();
             sendPacket(message);
         } catch (IOException e) {
             e.printStackTrace();

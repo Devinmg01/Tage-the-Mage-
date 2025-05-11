@@ -64,10 +64,24 @@ public class EnemyManager {
         }
     }
 
+    public void removeEnemy(UUID enemyID) {
+        Enemy enemy = enemies.stream().filter(e -> e.getId().equals(enemyID)).findFirst().orElse(null);
+        if (enemy != null) {
+            enemies.remove(enemy);
+            if (game.getClientManager() != null) {
+                game.getClientManager().sendEnemyRemove(enemyID);
+            }
+            game.getEngine().getSceneGraph().removeGameObject(enemy);
+        }
+    }
+
     public void update(float elapsedTime) {
         for (Enemy enemy : enemies) {
             enemy.move(elapsedTime);
             enemy.getAnimatedShape().updateAnimation();
+           if (enemy.checkCollision(game.getAvatar())) {
+               game.getEnemyManager().removeEnemy(enemy.getId());
+           }
         }
         lastSpawnTime += elapsedTime;
         if (lastSpawnTime >= (SPAWN_RATE * 100f) && enemies.size() < 50) {

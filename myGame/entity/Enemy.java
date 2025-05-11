@@ -52,14 +52,7 @@ public class Enemy extends GameCharacter {
         }
 
         if (checkCollision(game.getAvatar())) {
-            if (avatarDmgTick == 0) {
-                game.getAvatar().takeDamage();
-            }
-            avatarDmgTick++;
-            if (avatarDmgTick == 50) {
-                avatarDmgTick = 0;
-                System.out.println("Avatar hit");
-            }
+            game.getAvatar().takeDamage();
         }
 
         if (!"WALKING".equals(getCurrentAnimation())) {
