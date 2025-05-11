@@ -52,10 +52,7 @@ public class Tower extends GameObject {
      */
     public void takeDamage() {
 
-        if (health == 1) {
-            game.endGame();
-        }
-        else if (health >= 70) {
+        if (health >= 70) {
             game.getTowerLight().setDiffuse(0f, 1f, 0f);
         }
         else if (health >= 30) {
