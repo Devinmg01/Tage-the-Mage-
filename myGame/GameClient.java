@@ -39,7 +39,6 @@ public class GameClient extends VariableFrameRateGame {
 	private AnimatedShape avatarAnimShape, goblinAnimShape;
 	private TextureImage terrainTex, towerTex, goblinTex;
 	private Vector3f hud1Color, hud2Color;
-	private boolean isGameOver = false;
 	private TextureImage[] avatarTextures = new TextureImage[4];
 	private Sound walkSound, goblinSound, backgroundMusic;
 	
@@ -425,9 +424,15 @@ public class GameClient extends VariableFrameRateGame {
 		Viewport main = (engine.getRenderSystem()).getViewport("MAIN");
 		float width = main.getActualWidth();
 		float height = main.getActualHeight();
+		String hud2Str = "";
 
+		if (tower.getHealth() <= 0) {
+			hud2Str = "GAME OVER";
+		}
+		else {
+			hud2Str = "Tower Health: " + tower.getHealth();
+		}
 		String hud1Str = "Avatar Health: " + avatar.getHealth();
-		String hud2Str = "Tower Health: " + tower.getHealth();
 
 		(engine.getHUDmanager()).setHUD1(hud1Str, hud1Color,
 				(int) ((width - (width / 2)) - ((float) (hud1Str.length() * 8) / 2)), 15);
@@ -459,13 +464,6 @@ public class GameClient extends VariableFrameRateGame {
 		{ ret[i] = (double)arr[i];
 		}
 		return ret;
-	}
-
-	/**
-	 * End the game
-	 */
-	public void endGame() {
-		isGameOver = false;
 	}
 
 	/*

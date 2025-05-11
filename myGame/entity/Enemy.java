@@ -21,6 +21,7 @@ public class Enemy extends GameCharacter {
     private Vector3f targetLoc;
     private FwdAction fwdAction;
     private boolean isDead = false;
+    private boolean isAttackingTower = false;
 
 
     /**
@@ -54,6 +55,10 @@ public class Enemy extends GameCharacter {
 
         if (getLocalLocation().distance(targetLoc) >= 5f && !checkCollision(game.getAvatar())) {
             fwdAction.moveForward(elapsedTime, DEFAULT_SPEED);
+        }
+
+        if (getLocalLocation().distance(targetLoc) <= 5f && !isAttackingTower) {
+            isAttackingTower = true;
         }
 
         if (checkCollision(game.getAvatar())) {
@@ -92,5 +97,12 @@ public class Enemy extends GameCharacter {
      */
     public UUID getId() {
         return id;
+    }
+
+    /**
+     * @return if the enemy is attacking a tower
+     */
+    public boolean isAttackingTower() {
+        return isAttackingTower;
     }
 }
