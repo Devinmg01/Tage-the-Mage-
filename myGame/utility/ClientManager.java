@@ -85,6 +85,13 @@ public class ClientManager extends GameConnectionClient {
                     remoteId = UUID.fromString(msgTokens[1]);
                     sendAllEnemies(remoteId);
                     break;
+                case "tower_request": // Format: tower_request, remoteID
+                    remoteId = UUID.fromString(msgTokens[1]);
+                    sendTowerHealth(remoteId);
+                    break;
+                case "tower_health": // Format: tower_health,health
+                    game.getTower().setHealth(Integer.parseInt(msgTokens[1]));
+                    break;
             }
         }
     }
@@ -201,7 +208,7 @@ public class ClientManager extends GameConnectionClient {
 
     /**
      * Message to a client that is requesting the positions of all the enemies
-     * Message Format: all_enemies,remoteID,
+     * Message Format: all_enemies,remoteID
      */
     public void sendAllEnemies(UUID remoteId) {
         ArrayList<Enemy> enemies = game.getEnemyManager().getEnemies();
@@ -218,6 +225,20 @@ public class ClientManager extends GameConnectionClient {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+        }
+    }
+
+    /**
+     * Message to a client that is requesting the health of the tower
+     * Message Format: tower_health,remoteID,health
+     */
+    public void sendTowerHealth(UUID remoteId) {
+        try {
+            String message = String.format("tower_health," + remoteId.toString());
+            message += "," + game.getTower().getHealth();
+            sendPacket(message);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }

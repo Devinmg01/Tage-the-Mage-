@@ -73,7 +73,7 @@ public class FwdAction extends AbstractInputAction {
             amount = e.getValue();
         }
 
-        moveForward(elapsTime, amount);
+        moveForward(elapsTime * 1.25f, amount);
 
         if (object instanceof Avatar) {
             animate();

@@ -108,7 +108,7 @@ public class EnemyManager {
                     if (goblinSound != null && !goblinSound.getIsPlaying()) {
                         goblinSound.setLocation(enemy.getWorldLocation());
                         goblinSound.play();
-                        System.out.println("Goblin grunt played near: " + enemy.getWorldLocation());
+                        //System.out.println("Goblin grunt played near: " + enemy.getWorldLocation());
                         break; // only play once from one goblin
                     }
                 }

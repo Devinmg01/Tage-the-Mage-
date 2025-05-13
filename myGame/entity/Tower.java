@@ -76,6 +76,6 @@ public class Tower extends GameObject {
      * Set the health of the tower
      */
     public void setHealth(int health) {
-        this.health = health;
+        this.health = Math.max(health, 0);
     }
 }

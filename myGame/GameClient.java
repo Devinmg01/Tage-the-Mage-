@@ -11,11 +11,9 @@ import tage.shapes.*;
 import tage.audio.*;
 import org.joml.Vector3f;
 import org.joml.Matrix4f;
-
 import java.io.IOException;
 import java.net.InetAddress;
 import tage.physics.PhysicsEngine;
-import tage.physics.PhysicsObject;
 
 public class GameClient extends VariableFrameRateGame {
 
@@ -35,17 +33,19 @@ public class GameClient extends VariableFrameRateGame {
 	private Avatar avatar;
 	private Tower tower;
 	private GameObject terrain;
-	private ObjShape terrainShape, avatarShape, towerShape, goblinShape;
+	private ObjShape terrainShape, towerShape;
 	private AnimatedShape avatarAnimShape, goblinAnimShape;
 	private TextureImage terrainTex, towerTex, goblinTex;
-	private Vector3f hud1Color, hud2Color;
+	private Vector3f hud1Color, hud2Color, hud3Color;
 	private TextureImage[] avatarTextures = new TextureImage[4];
 	private Sound walkSound, goblinSound, backgroundMusic;
-	
+
+	private double gameTime = 0;
 	private double lastFrameTime, currFrameTime, elapseFrameTime;
 	private final String serverAddress;
 	private final int serverPort;
-	private int skinIndex = 0; 
+	private int skinIndex = 0;
+	private boolean isGameOver = false;
 
 
 	public GameClient(String serverAddress, int serverPort, int skinIndex) {
@@ -85,9 +85,7 @@ public class GameClient extends VariableFrameRateGame {
 	@Override
 	public void loadShapes() {
         terrainShape = new TerrainPlane();
-        avatarShape = new ImportedModel("wizard.obj");
         towerShape = new ImportedModel("tower.obj");
-        goblinShape = new ImportedModel("goblin.obj");
 
 		avatarAnimShape = new AnimatedShape("wizardmeshy.rkm", "wizardskelly.rks");
 		avatarAnimShape.loadAnimation("CAST", "fireball.rka");
@@ -135,10 +133,6 @@ public class GameClient extends VariableFrameRateGame {
 		AudioResource musicRes = audioMgr.createAudioResource("BackgroundMusic.wav", AudioResourceType.AUDIO_SAMPLE);
 		backgroundMusic = new Sound(musicRes, SoundType.SOUND_MUSIC,5, true); 
 		backgroundMusic.initialize(audioMgr);
-
-		
-		
-
 	}
 
 	@Override
@@ -169,6 +163,7 @@ public class GameClient extends VariableFrameRateGame {
 		// Hud Color
 		hud1Color = new Vector3f(1, 0, 0);
 		hud2Color = new Vector3f(0, 0, 1);
+		hud3Color = new Vector3f(0, 0, 1);
 	}
 
 	@Override
@@ -252,6 +247,14 @@ public class GameClient extends VariableFrameRateGame {
 		lastFrameTime = currFrameTime;
 		currFrameTime = System.currentTimeMillis();
 		elapseFrameTime = (currFrameTime - lastFrameTime) / 100f;
+
+		if (tower.getHealth() <= 0) {
+			isGameOver = true;
+		}
+
+		if (!isGameOver) {
+			gameTime += elapseFrameTime;
+		}
 
 		im.update((float) elapseFrameTime);
 
@@ -393,9 +396,11 @@ public class GameClient extends VariableFrameRateGame {
 	 */
 	private void updateStates(float elapseFrameTime) {
 		cam.update();
-		enemyManager.update(elapseFrameTime);
 		avatarLight.setLocation(avatar.getWorldLocation().add(0, 2, 0));
-		tower.update();
+		if (!isGameOver) {
+			enemyManager.update(elapseFrameTime);
+			tower.update();
+		}
 
 		if (avatar.getLocalLocation().distance(new Vector3f(-50, 0, 0)) < 5.5f) {
 			avatar.heal();
@@ -425,12 +430,15 @@ public class GameClient extends VariableFrameRateGame {
 		float width = main.getActualWidth();
 		float height = main.getActualHeight();
 		String hud2Str = "";
+		String hud3Str = "";
 
-		if (tower.getHealth() <= 0) {
+		if (isGameOver) {
 			hud2Str = "GAME OVER";
+			hud3Str = "Final Time = " + (int) (gameTime) / 10f;
 		}
 		else {
 			hud2Str = "Tower Health: " + tower.getHealth();
+			hud3Str = "Time = " + (int) (gameTime) / 10f;
 		}
 		String hud1Str = "Avatar Health: " + avatar.getHealth();
 
@@ -438,6 +446,8 @@ public class GameClient extends VariableFrameRateGame {
 				(int) ((width - (width / 2)) - ((float) (hud1Str.length() * 8) / 2)), 15);
 		(engine.getHUDmanager()).setHUD2(hud2Str, hud2Color,
 				(int) ((width - (width / 2)) - ((float) (hud2Str.length() * 8) / 2)), (int) (height - 30));
+		(engine.getHUDmanager()).setHUD3(hud3Str, hud3Color,
+				(int) ((width - (width / 2)) - ((float) (hud3Str.length() * 8) / 2)), (int) (height - 60));
 	}
 
 	/**

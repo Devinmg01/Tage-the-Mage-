@@ -56,6 +56,7 @@ public class ServerManager extends GameConnectionServer<UUID> {
                     sendCreateMessages(clientId, skin, position);
                     sendWantsDetailsMessages(clientId);
                     sendWantsEnemiesMessage(clientId);
+                    sendWantsTowerMessage(clientId);
                     break;
                 case "dsfr": // Message Format: dsfr,remoteID,clientID,skin,x,y,z
                     remoteId = UUID.fromString(msgTokens[1]);
@@ -84,6 +85,11 @@ public class ServerManager extends GameConnectionServer<UUID> {
                     enemyId = UUID.fromString(msgTokens[2]);
                     position = new String[] { msgTokens[3], msgTokens[4], msgTokens[5] };
                     sendSpawnEnemyMessageToId(remoteId, enemyId, position);
+                    break;
+                case "tower_health": // Format: tower_health,remoteId,health
+                    remoteId = UUID.fromString(msgTokens[1]);
+                    int health = Integer.parseInt(msgTokens[2]);
+                    sendTowerHealthMessage(remoteId, health);
                     break;
             }
         }
@@ -245,4 +251,40 @@ public class ServerManager extends GameConnectionServer<UUID> {
             e.printStackTrace();
         }
     }
+
+    /**
+     * Informs clients that a remote client wants the detail for tower health
+     * Message Format: tower_request, clientID
+     */
+    public void sendWantsTowerMessage(UUID clientId) {
+        try {
+            String message = new String("tower_request," + clientId.toString());
+            remoteId = null;
+            for (UUID client : getClients().keySet()) {
+                if (!client.equals(clientId)) {
+                    remoteId = client;
+                    break;
+                }
+            }
+            if (remoteId != null) {
+                sendPacket(message, remoteId);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Inform the client of the tower's current health
+     * Message Format: tower_health,health
+     */
+    public void sendTowerHealthMessage(UUID remoteId, int health) {
+        try {
+            String message = new String("tower_health," + health);
+            sendPacket(message, remoteId);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

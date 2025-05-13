@@ -8,7 +8,7 @@ import tage.GameObject;
 import tage.ObjShape;
 import tage.TextureImage;
 import java.util.UUID;
-import tage.audio.*;
+
 import tage.shapes.AnimatedShape;
 
 public class Enemy extends GameCharacter {
@@ -22,7 +22,6 @@ public class Enemy extends GameCharacter {
     private FwdAction fwdAction;
     private boolean isDead = false;
     private boolean isAttackingTower = false;
-
 
     /**
      * Construct Enemy object with the specified parameters
@@ -40,14 +39,6 @@ public class Enemy extends GameCharacter {
         lookAt(targetLoc);
     }
 
-    public void markAsDead() {
-        isDead = true;
-    }
-
-    public boolean isDead() {
-        return isDead;
-    }
-
     /**
      * Update the enemy's position towards the target
      */
@@ -61,7 +52,7 @@ public class Enemy extends GameCharacter {
             isAttackingTower = true;
         }
 
-        if (checkCollision(game.getAvatar())) {
+        if (checkCollision(game.getAvatar()) && game.getAvatar().getHealth() > 0) {
             game.getAvatar().takeDamage();
             markAsDead();
         }
@@ -104,5 +95,19 @@ public class Enemy extends GameCharacter {
      */
     public boolean isAttackingTower() {
         return isAttackingTower;
+    }
+
+    /**
+     * Mark the enemy as dead
+     */
+    public void markAsDead() {
+        isDead = true;
+    }
+
+    /**
+     * @return is the enemy is dead
+     */
+    public boolean isDead() {
+        return isDead;
     }
 }

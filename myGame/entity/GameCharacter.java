@@ -2,7 +2,6 @@ package myGame.entity;
 
 import myGame.GameClient;
 import tage.GameObject;
-import tage.Light;
 import tage.ObjShape;
 import tage.TextureImage;
 import tage.physics.PhysicsObject;
