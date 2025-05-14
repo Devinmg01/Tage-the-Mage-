@@ -127,7 +127,7 @@ public class GameClient extends VariableFrameRateGame {
 		goblinSound.setMaxDistance(10.0f);
     	goblinSound.setMinDistance(5.0f);
     	goblinSound.setRollOff(5.0f);
-		//goblinSound.play();
+		//goblinSound.play();/
 
 
 		AudioResource musicRes = audioMgr.createAudioResource("BackgroundMusic.wav", AudioResourceType.AUDIO_SAMPLE);
@@ -506,6 +506,20 @@ public class GameClient extends VariableFrameRateGame {
 	 */
 	public EnemyManager getEnemyManager() {
 		return enemyManager;
+	}
+
+	/**
+	 * @return the game time
+	 */
+	public double getGameTime() {
+		return gameTime;
+	}
+
+	/**
+	 * Set the game time
+	 */
+	public void setGameTime(double gameTime) {
+		this.gameTime = gameTime;
 	}
 
 	/**

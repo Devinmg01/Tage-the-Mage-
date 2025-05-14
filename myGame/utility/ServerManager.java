@@ -56,7 +56,8 @@ public class ServerManager extends GameConnectionServer<UUID> {
                     sendCreateMessages(clientId, skin, position);
                     sendWantsDetailsMessages(clientId);
                     sendWantsEnemiesMessage(clientId);
-                    sendWantsTowerMessage(clientId);
+                    sendWantsTowerHealthMessage(clientId);
+                    sendWantsTimeMessage(clientId);
                     break;
                 case "dsfr": // Message Format: dsfr,remoteID,clientID,skin,x,y,z
                     remoteId = UUID.fromString(msgTokens[1]);
@@ -76,9 +77,10 @@ public class ServerManager extends GameConnectionServer<UUID> {
                     position = new String[] { msgTokens[3], msgTokens[4], msgTokens[5] };
                     sendSpawnEnemyMessage(clientId, enemyId, position);
                     break;
-                case "enemy_dies": // Format: enemy_dies,enemyId
-                    enemyId = UUID.fromString(msgTokens[1]);
-                    sendEnemyDiesMessage(enemyId);
+                case "enemy_dies": // enemy_dies,clientID,enemyID
+                    clientId = UUID.fromString(msgTokens[1]);
+                    enemyId = UUID.fromString(msgTokens[2]);
+                    sendEnemyDiesMessage(clientId, enemyId);
                     break;
                 case "enemy_spawn_id": // Format: enemy_spawn_id,remoteID,enemyId,x,y,z
                     remoteId = UUID.fromString(msgTokens[1]);
@@ -86,10 +88,15 @@ public class ServerManager extends GameConnectionServer<UUID> {
                     position = new String[] { msgTokens[3], msgTokens[4], msgTokens[5] };
                     sendSpawnEnemyMessageToId(remoteId, enemyId, position);
                     break;
-                case "tower_health": // Format: tower_health,remoteId,health
+                case "current_tower_health": // Format: current_tower_health,remoteID,health
                     remoteId = UUID.fromString(msgTokens[1]);
                     int health = Integer.parseInt(msgTokens[2]);
                     sendTowerHealthMessage(remoteId, health);
+                    break;
+                case "current_time": // Format: current_time,remoteID,time
+                    remoteId = UUID.fromString(msgTokens[1]);
+                    double time = Double.parseDouble(msgTokens[2]);
+                    sendTimeMessage(remoteId, time);
                     break;
             }
         }
@@ -227,7 +234,7 @@ public class ServerManager extends GameConnectionServer<UUID> {
      * Informs the clients that an enemy has died
      * Message Format: enemy_dies,enemyID
      */
-    public void sendEnemyDiesMessage(UUID enemyId) {
+    public void sendEnemyDiesMessage(UUID clientId, UUID enemyId) {
         try {
             String message = new String("enemy_dies," + enemyId.toString());
             forwardPacketToAll(message, clientId);
@@ -254,11 +261,11 @@ public class ServerManager extends GameConnectionServer<UUID> {
 
     /**
      * Informs clients that a remote client wants the detail for tower health
-     * Message Format: tower_request, clientID
+     * Message Format: get_tower_health,clientID
      */
-    public void sendWantsTowerMessage(UUID clientId) {
+    public void sendWantsTowerHealthMessage(UUID clientId) {
         try {
-            String message = new String("tower_request," + clientId.toString());
+            String message = new String("get_tower_health," + clientId.toString());
             remoteId = null;
             for (UUID client : getClients().keySet()) {
                 if (!client.equals(clientId)) {
@@ -276,11 +283,46 @@ public class ServerManager extends GameConnectionServer<UUID> {
 
     /**
      * Inform the client of the tower's current health
-     * Message Format: tower_health,health
+     * Message Format: current_tower_health,health
      */
     public void sendTowerHealthMessage(UUID remoteId, int health) {
         try {
-            String message = new String("tower_health," + health);
+            String message = new String("current_tower_health," + health);
+            sendPacket(message, remoteId);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Informs clients that a remote client wants the detail for tower health
+     * Message Format: get_time,clientID
+     */
+    public void sendWantsTimeMessage(UUID clientId) {
+        try {
+            String message = new String("get_time," + clientId.toString());
+            remoteId = null;
+            for (UUID client : getClients().keySet()) {
+                if (!client.equals(clientId)) {
+                    remoteId = client;
+                    break;
+                }
+            }
+            if (remoteId != null) {
+                sendPacket(message, remoteId);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Inform the client of the tower's current health
+     * Message Format: current_time,time
+     */
+    public void sendTimeMessage(UUID remoteId, double time) {
+        try {
+            String message = new String("current_time," + time);
             sendPacket(message, remoteId);
         } catch (IOException e) {
             e.printStackTrace();

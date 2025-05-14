@@ -85,12 +85,19 @@ public class ClientManager extends GameConnectionClient {
                     remoteId = UUID.fromString(msgTokens[1]);
                     sendAllEnemies(remoteId);
                     break;
-                case "tower_request": // Format: tower_request, remoteID
+                case "get_tower_health": // Format: get_tower_health,remoteID
                     remoteId = UUID.fromString(msgTokens[1]);
                     sendTowerHealth(remoteId);
                     break;
-                case "tower_health": // Format: tower_health,health
+                case "current_tower_health": // Format: current_tower_health,health
                     game.getTower().setHealth(Integer.parseInt(msgTokens[1]));
+                    break;
+                case "get_time": // Format: get_time,remoteID
+                    remoteId = UUID.fromString(msgTokens[1]);
+                    sendTime(remoteId);
+                    break;
+                case "current_time": // Format: current_time,time
+                    game.setGameTime(Double.parseDouble(msgTokens[1]));
                     break;
             }
         }
@@ -230,12 +237,26 @@ public class ClientManager extends GameConnectionClient {
 
     /**
      * Message to a client that is requesting the health of the tower
-     * Message Format: tower_health,remoteID,health
+     * Message Format: current_tower_health,remoteID,health
      */
     public void sendTowerHealth(UUID remoteId) {
         try {
-            String message = String.format("tower_health," + remoteId.toString());
+            String message = String.format("current_tower_health," + remoteId.toString());
             message += "," + game.getTower().getHealth();
+            sendPacket(message);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Message to a client that is requesting the game time
+     * Message Format: current_time,remoteID,time
+     */
+    public void sendTime(UUID remoteId) {
+        try {
+            String message = String.format("current_time," + remoteId.toString());
+            message += "," + game.getGameTime();
             sendPacket(message);
         } catch (IOException e) {
             e.printStackTrace();
