@@ -14,6 +14,8 @@ A 3D networked multiplayer survival game built in Java using the TAGE engine. Up
 
 ---
 
+![GamePlay](ScreenShots/GamePlay.png)
+
 ##  How to Play
 
 Your goal is to survive and defend the wizard tower from goblins. Walk into goblins to damage them and survive as long as possible. The longer you last, the higher your score. Heal yourself and the tower by standing in the healing spotlight.
